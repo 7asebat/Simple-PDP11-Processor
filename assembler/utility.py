@@ -219,16 +219,18 @@ def sanitize_line(line):
 
 
 def sanitize_label(key, value, labels, Memory):
-  if re.search(r"\{\w+\}", value):
+    if re.search(r"\{\w+\}", value):
       label = re.search(r"\{(\w+)\}", value).group(1)
-
-      offset = labels[label] - (key + 1)
-      if not -128 <= offset <= 127:
-          print('Offset out of range in line', index + 1)
-          sys.exit(1)
-
+      if(re.match('^\{', value)):
+            address = f"{labels[label]:016b}"
+            newValue = value.replace('{' + label + '}', address)
+      else:
+            offset = labels[label] - (key + 1)
+            if not -128 <= offset <= 127:
+                print('Offset out of range in line', index + 1)
+                sys.exit(1)
+            newValue = value.replace('{' + label + '}', '000' + f"{offset & 0xFF:08b}")
       # Updating Memory Value
-      newValue = value.replace('{' + label + '}', '000' + f"{offset & 0xFF:08b}")
       Memory[key] = newValue
 
 
@@ -313,10 +315,9 @@ def process_jsr(instruction, bitString, Memory, curr_addr):
 
       Memory[curr_addr] = bitString + '0' * (16 - len(bitString))
       curr_addr += 1
-
       label = instruction[1]
       if label in labels:
-          Memory[curr_addr] = labels[label]
+          Memory[curr_addr] = f"{labels[label]:016b}"
       else:
           Memory[curr_addr] = '{' + label + '}'
   else:
