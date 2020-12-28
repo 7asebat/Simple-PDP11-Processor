@@ -98,7 +98,7 @@ no_op_instructions = ['HLT', 'NOP', 'RESET']
 jsr_instructions = ['JSR', 'RTS', 'INTERRUPT', 'IRET']
 
 
-def get_addressing_mode(op):
+def get_addressing_mode(op,curr_addr):
     tempBitString = ['', '']
     register = re.search('R[0-7]', op)
     if register:
@@ -151,7 +151,8 @@ def get_addressing_mode(op):
             address = variables[variable]['address']
             tempBitString[0] += addressing_mode_opcodes['indexed'] \
                 + register_opcodes['R7']
-            tempBitString[1] += f"{address:016b}"
+            offset = address-(curr_addr+2)
+            tempBitString[1] += f"{offset & 0xFFFF:016b}"
 
         else:
             address = '[' + variable + ']'
@@ -165,16 +166,16 @@ def get_addressing_mode(op):
     return tempBitString
 
 
-def handle_two_op_instruction(op1, op2):
-    firstOpBits = get_addressing_mode(op1)
-    secondOpBits = get_addressing_mode(op2)
+def handle_two_op_instruction(op1, op2,curr_addr):
+    firstOpBits = get_addressing_mode(op1,curr_addr)
+    secondOpBits = get_addressing_mode(op2,curr_addr)
     operandsBitString = firstOpBits[0] + secondOpBits[0]
     returnedBitArr = [firstOpBits[0] + secondOpBits[0], firstOpBits[1], secondOpBits[1]]
     return returnedBitArr
 
 
-def handle_one_op_instruction(op):
-    opBits = get_addressing_mode(op)
+def handle_one_op_instruction(op,curr_addr):
+    opBits = get_addressing_mode(op,curr_addr)
     returnedBitArr = [opBits[0] + '0' * (8 - len(opBits[0])), opBits[1]]
     return returnedBitArr
 
@@ -235,11 +236,12 @@ def sanitize_variable(key, value, variables, Memory):
   if re.search(r"\[\w+\]", value):
       var = re.search(r"\[(\w+)\]", value).group(1)
       print(var)
-      Memory[key] = f"{variables[var]['address']:016b}"
+      offset = variables[var]['address'] - (key + 1)
+      Memory[key] =  f"{offset & 0xFFFF:016b}"
 
 
 def process_two_op(instruction, bitString, Memory, curr_addr):
-  two_op_result = handle_two_op_instruction(instruction[1], instruction[2])
+  two_op_result = handle_two_op_instruction(instruction[1], instruction[2],curr_addr)
 
   # Constructing Memory
   Memory[curr_addr] = bitString + two_op_result[0]  # instruction in memory
@@ -256,7 +258,7 @@ def process_two_op(instruction, bitString, Memory, curr_addr):
 
 
 def process_one_op(instruction, bitString, Memory, curr_addr):
-  one_op_result = handle_one_op_instruction(instruction[1])
+  one_op_result = handle_one_op_instruction(instruction[1],curr_addr)
 
   # Constructing Memory
   Memory[curr_addr] = bitString + one_op_result[0]
