@@ -17,9 +17,6 @@ BEQ Label2      ; not taken address 14
 INC R3          ; R3=20 address 15
 Label2:         ; address 16
 BR Label3       ; address 16
-JSR Label3
-
 HLT             ; address 17
-Define N -7      ; address 18
+Define N 7      ; address 18
 Define M 5      ; address 19
-
