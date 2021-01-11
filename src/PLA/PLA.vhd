@@ -54,42 +54,42 @@ begin
 					load <= -- row 92 (Branch Offset)
 				ELSIF IR(n-5 DOWNTO n-7) = "001" THEN
 					-- BEQ instruction
-					IF Z = '1' THEN
+					IF status_Z = '1' THEN
 						load <= -- row 92 (Branch Offset)
 					ELSE
 						load <= (OTHERS => '0'); -- END
 					END IF;
 				ELSIF IR(n-5 DOWNTO n-7) = "010" THEN
 					-- BNE instruction
-					IF Z = '0' THEN
+					IF status_Z = '0' THEN
 						load <= -- row 92 (Branch Offset)
 					ELSE
 						load <= (OTHERS => '0'); -- END
 					END IF;
 				ELSIF IR(n-5 DOWNTO n-7) = "011" THEN
 					-- BLO instruction
-					IF C = '1' THEN
+					IF status_C = '1' THEN
 						load <= -- row 92 (Branch Offset)
 					ELSE
 						load <= (OTHERS => '0'); -- END
 					END IF;
 				ELSIF IR(n-5 DOWNTO n-7) = "100" THEN
 					-- BLS instruction
-					IF C = 0 OR Z = 1 THEN
+					IF status_C = 0 OR status_Z = 1 THEN
 						load <= -- row 92 (Branch Offset)
 					ELSE
 						load <= (OTHERS => '0'); -- END
 					END IF;
 				ELSIF IR(n-5 DOWNTO n-7) = "101" THEN
 					-- BHI instruction
-					IF C = 1 THEN
+					IF status_C = 1 THEN
 						load <= -- row 92 (Branch Offset)
 					ELSE
 						load <= (OTHERS => '0'); -- END
 					END IF;
 				ELSIF IR(n-5 DOWNTO n-7) = "110" THEN
 					-- BHS instruction
-					IF C = 1 OR Z = 1 THEN
+					IF status_C = 1 OR status_Z = 1 THEN
 						load <= -- row 92 (Branch Offset)
 					ELSE
 						load <= (OTHERS => '0'); -- END
