@@ -6,7 +6,9 @@ entity PLA is
 	generic(n: integer := 16);
 	port(
 	IR, controlStepCounter, statusRegister : in std_logic_vector(n-1 downto 0);
-	load : out std_logic_vector(n-1 downto 0));
+	load : out std_logic_vector(n-1 downto 0);
+	halt: out std_logic
+	);
 end entity PLA;
 
 architecture default of PLA is
@@ -55,65 +57,66 @@ begin
 						load <= -- row 92 (Branch Offset)
 					ELSE
 						load <= (OTHERS => '0'); -- END
-					END
+					END IF;
 				ELSIF IR(n-5 DOWNTO n-7) = "010" THEN
 					-- BNE instruction
 					IF Z = '0' THEN
 						load <= -- row 92 (Branch Offset)
 					ELSE
 						load <= (OTHERS => '0'); -- END
-					END
+					END IF;
 				ELSIF IR(n-5 DOWNTO n-7) = "011" THEN
 					-- BLO instruction
 					IF C = '1' THEN
 						load <= -- row 92 (Branch Offset)
 					ELSE
 						load <= (OTHERS => '0'); -- END
-					END
+					END IF;
 				ELSIF IR(n-5 DOWNTO n-7) = "100" THEN
 					-- BLS instruction
 					IF C = 0 OR Z = 1 THEN
 						load <= -- row 92 (Branch Offset)
 					ELSE
 						load <= (OTHERS => '0'); -- END
-					END
+					END IF;
 				ELSIF IR(n-5 DOWNTO n-7) = "101" THEN
 					-- BHI instruction
 					IF C = 1 THEN
 						load <= -- row 92 (Branch Offset)
 					ELSE
 						load <= (OTHERS => '0'); -- END
-					END
+					END IF;
 				ELSIF IR(n-5 DOWNTO n-7) = "110" THEN
 					-- BHS instruction
 					IF C = 1 OR Z = 1 THEN
 						load <= -- row 92 (Branch Offset)
 					ELSE
 						load <= (OTHERS => '0'); -- END
-					END
-			END
+					END IF;
+			END IF;
 			
 			IF (signed(controlStepCounter) = 6) THEN -- row 94: µ-PC <= PLA(IR)$ [Double Operand]::ADD SRC, DST
-					load <= -- row 48 (ADD SRC, DST)
-			END
+				load <= -- row 48 (ADD SRC, DST)
+			END IF;
 
 			IF (signed(controlStepCounter) = 9) THEN -- row 50: µ-PC <= PLA(IR)$ [Move Z to PC]
 				load <= -- row 95 (MOV Z to PC)
-			END
+			END IF;
 
 			IF (signed(controlStepCounter) = 11) THEN -- row 96: END
 				load <= (OTHERS => '0')-- row 95 (MOV Z to PC)
-			END
+			END IF;
 
 		
 		ELSIF IR(n-1 DOWNTO 12) = "1010" THEN
 			-- no op instruction
 			IF IR(n-5 DOWNTO n-8) = "0000" THEN
-				-- HLT instruction
+				halt <= '1';
 			ELSIF IR(n-5 DOWNTO n-8) = "0001" THEN
-				-- NOP instruction
+				load <= (OTHERS => '0');
 			ELSIF IR(n-5 DOWNTO n-8) = "0010" THEN
-				-- RESET instruction
+				-- RESET instruction (CANCELLED)
+			END IF;
 
 			
 		ELSIF IR(n-1 DOWNTO 12) = "1011" THEN
@@ -126,6 +129,7 @@ begin
 				-- INTERRUPT instruction
 			ELSIF IR(n-5 DOWNTO n-8) = "0011" THEN
 				-- IRET instruction
+			END IF
 
 			
 		ELSIF IR(n-1 DOWNTO 12) = "0000" THEN
