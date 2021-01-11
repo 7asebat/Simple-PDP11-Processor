@@ -161,7 +161,7 @@ begin
 
 		ELSIF IR(n-1 DOWNTO 12) = "1000" THEN
 			-- CMP instruction
-			
+		END IF;
 		
 		
 		ELSE
