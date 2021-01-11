@@ -34,14 +34,14 @@ begin
 		VARIABLE CMP_INSTRUCTION : std_logic_vector(3 downto 0) := "1000";
 
 		-- ADDRESSING MODES
-		VARIABLE REG_DIRECT					: std_logic_vector(2 DOWNTO 0) := '000';
-		VARIABLE REG_INDIRECT				: std_logic_vector(2 DOWNTO 0) := '001';
-		VARIABLE AUTO_INCREMENT				: std_logic_vector(2 DOWNTO 0) := '010';
-		VARIABLE AUTO_INCREMENT_IDIRECT		: std_logic_vector(2 DOWNTO 0) := '011';
-		VARIABLE AUTO_DECREMENT				: std_logic_vector(2 DOWNTO 0) := '100';
-		VARIABLE AUTO_DECREMENT_INDIRECT	: std_logic_vector(2 DOWNTO 0) := '101';
-		VARIABLE INDEXED					: std_logic_vector(2 DOWNTO 0) := '110';
-		VARIABLE INDEXED_INDIRECT			: std_logic_vector(2 DOWNTO 0) := '111';
+		VARIABLE REG_DIRECT					: std_logic_vector(2 DOWNTO 0) := "000";
+		VARIABLE REG_INDIRECT				: std_logic_vector(2 DOWNTO 0) := "001";
+		VARIABLE AUTO_INCREMENT				: std_logic_vector(2 DOWNTO 0) := "010";
+		VARIABLE AUTO_INCREMENT_IDIRECT		: std_logic_vector(2 DOWNTO 0) := "011";
+		VARIABLE AUTO_DECREMENT				: std_logic_vector(2 DOWNTO 0) := "100";
+		VARIABLE AUTO_DECREMENT_INDIRECT	: std_logic_vector(2 DOWNTO 0) := "101";
+		VARIABLE INDEXED					: std_logic_vector(2 DOWNTO 0) := "110";
+		VARIABLE INDEXED_INDIRECT			: std_logic_vector(2 DOWNTO 0) := "111";
 
 	BEGIN
 		IF IR(n-1 DOWNTO n-4) = "1001" AND (signed(controlStepCounter) = 3) THEN
@@ -103,21 +103,21 @@ begin
 					END IF;
 				ELSIF IR(n-5 DOWNTO n-7) = "100" THEN
 					-- BLS instruction
-					IF status_C = 0 OR status_Z = 1 THEN
+					IF status_C = '0' OR status_Z = '1' THEN
 						load <= std_logic_vector(to_unsigned(85, load'length)); -- Branch Offset
 					ELSE
 						load <= (OTHERS => '0'); -- END
 					END IF;
 				ELSIF IR(n-5 DOWNTO n-7) = "101" THEN
 					-- BHI instruction
-					IF status_C = 1 THEN
+					IF status_C = '1' THEN
 						load <= std_logic_vector(to_unsigned(85, load'length)); -- Branch Offset
 					ELSE
 						load <= (OTHERS => '0'); -- END
 					END IF;
 				ELSIF IR(n-5 DOWNTO n-7) = "110" THEN
 					-- BHS instruction
-					IF status_C = 1 OR status_Z = 1 THEN
+					IF status_C = '1' OR status_Z = '1' THEN
 						load <= std_logic_vector(to_unsigned(85, load'length)); -- Branch Offset
 					ELSE
 						load <= (OTHERS => '0'); -- END
@@ -134,7 +134,7 @@ begin
 			END IF;
 
 			IF (signed(controlStepCounter) = 11) THEN -- row 96: END
-				load <= (OTHERS => '0')-- row 95 (MOV Z to PC)
+				load <= (OTHERS => '0'); -- row 95 (MOV Z to PC)
 			END IF;
 
 		
@@ -196,7 +196,7 @@ begin
 				END IF;
 
 				IF signed(ControlStepCounter) = 13 THEN
-					load <= (OTHERS <= '0') -- END
+					load <= (OTHERS => '0'); -- END
 				END IF;
 
 			ELSIF IR(n-5 DOWNTO n-8) = "0011" THEN
@@ -214,7 +214,7 @@ begin
 				END IF;
 
 				IF signed(ControlStepCounter) = 11 THEN
-					load <= (OTHERS <= '0') -- END
+					load <= (OTHERS => '0'); -- END
 				END IF;
 			END IF;
 
@@ -290,7 +290,7 @@ begin
 
 			-- if SRC is reg direct and CSC is 7 go to dest fetching
 			IF  signed(controlStepCounter) = 7 AND IR(n-5 DOWNTO n-7) = "001" THEN
-				load <= std_logic_vector(to_unsigned(21, load'length))
+				load <= std_logic_vector(to_unsigned(21, load'length));
 			END IF;
 
 			-- if SRC is reg direct and CSC is 7 go to dest fetching
@@ -299,7 +299,7 @@ begin
 				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = "100") OR
 				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = "110")
 			) THEN
-				load <= std_logic_vector(to_unsigned(20, load'length))
+				load <= std_logic_vector(to_unsigned(20, load'length));
 			END IF;
 
 			IF signed(controlStepCounter) = 23 THEN
@@ -308,45 +308,45 @@ begin
 				-- CHECKING INSTRUCTION
 				IF IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION THEN
 					-- MOV INSTRUCTION
-					load <= std_logic_vector(to_unsigned(41, load'length))
+					load <= std_logic_vector(to_unsigned(41, load'length));
 
 				ELSIF IR(n-1 DOWNTO n-4) = ADD_INSTRUCTION THEN
 					-- ADD INSTRUCTION
-					load <= std_logic_vector(to_unsigned(43, load'length))
+					load <= std_logic_vector(to_unsigned(43, load'length));
 
 				ELSIF IR(n-1 DOWNTO n-4) = ADC_INSTRUCTION THEN
 					-- ADC INSTRUCTION
-					load <= std_logic_vector(to_unsigned(46, load'length))
+					load <= std_logic_vector(to_unsigned(46, load'length));
 
 				ELSIF IR(n-1 DOWNTO n-4) = SUB_INSTRUCTION THEN
 					-- SUB INSTRUCTION
-					load <= std_logic_vector(to_unsigned(49, load'length))
+					load <= std_logic_vector(to_unsigned(49, load'length));
 
 				ELSIF IR(n-1 DOWNTO n-4) = SBC_INSTRUCTION THEN
 					-- SBC INSTRUCTION
-					load <= std_logic_vector(to_unsigned(52, load'length))
+					load <= std_logic_vector(to_unsigned(52, load'length));
 
 				ELSIF IR(n-1 DOWNTO n-4) = AND_INSTRUCTION THEN
 					-- AND INSTRUCTION
-					load <= std_logic_vector(to_unsigned(55, load'length))
+					load <= std_logic_vector(to_unsigned(55, load'length));
 
 				ELSIF IR(n-1 DOWNTO n-4) = OR_INSTRUCTION THEN
 					-- OR INSTRUCTION
-					load <= std_logic_vector(to_unsigned(58, load'length))
+					load <= std_logic_vector(to_unsigned(58, load'length));
 
 				ELSIF IR(n-1 DOWNTO n-4) = XOR_INSTRUCTION THEN
 					-- XOR INSTRUCTION
-					load <= std_logic_vector(to_unsigned(61, load'length))
+					load <= std_logic_vector(to_unsigned(61, load'length));
 
 				ELSIF IR(n-1 DOWNTO n-4) = CMP_INSTRUCTION THEN
 					-- CMP INSTRUCTION
-					load <= std_logic_vector(to_unsigned(64, load'length))
+					load <= std_logic_vector(to_unsigned(64, load'length));
 
 				END IF;
 			END IF;
 
 			IF signed(controlStepCounter) = 25 THEN
-				load <= std_logic_vector(to_unsigned(39, load'length))
+				load <= std_logic_vector(to_unsigned(39, load'length));
 			END IF;
 
 			IF (
@@ -354,7 +354,7 @@ begin
 				signed(controlStepCounter) = 31 OR
 				signed(controlStepCounter) = 37
 			) THEN
-				load <= std_logic_vector(to_unsigned(38, load'length))
+				load <= std_logic_vector(to_unsigned(38, load'length));
 			END IF;
 
 			IF (
@@ -365,7 +365,7 @@ begin
 				signed(controlStepCounter) = 54 OR
 				signed(controlStepCounter) = 57 OR
 				signed(controlStepCounter) = 60 OR
-				signed(controlStepCounter) = 63 OR
+				signed(controlStepCounter) = 63
 			) THEN
 
 				-- DEST FETCHING
@@ -377,8 +377,6 @@ begin
 				END IF;
 			END IF;
 
-		ELSIF  THEN
-		
 		ELSE
 		END IF;
 	END PROCESS;
