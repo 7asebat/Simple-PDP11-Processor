@@ -79,46 +79,46 @@ begin
 			IF (signed(controlStepCounter) = 3) THEN -- go to corresponding branch instruction
 				IF IR(n-5 DOWNTO n-7) = "000" THEN
 					-- BR instruction
-					load <= -- row 92 (Branch Offset)
+					load <= std_logic_vector(to_unsigned(85, load'length)); -- Branch Offset
 				ELSIF IR(n-5 DOWNTO n-7) = "001" THEN
 					-- BEQ instruction
 					IF status_Z = '1' THEN
-						load <= -- row 92 (Branch Offset)
+						load <= std_logic_vector(to_unsigned(85, load'length)); -- Branch Offset
 					ELSE
 						load <= (OTHERS => '0'); -- END
 					END IF;
 				ELSIF IR(n-5 DOWNTO n-7) = "010" THEN
 					-- BNE instruction
 					IF status_Z = '0' THEN
-						load <= -- row 92 (Branch Offset)
+						load <= std_logic_vector(to_unsigned(85, load'length)); -- Branch Offset
 					ELSE
 						load <= (OTHERS => '0'); -- END
 					END IF;
 				ELSIF IR(n-5 DOWNTO n-7) = "011" THEN
 					-- BLO instruction
 					IF status_C = '1' THEN
-						load <= -- row 92 (Branch Offset)
+						load <= std_logic_vector(to_unsigned(85, load'length)); -- Branch Offset
 					ELSE
 						load <= (OTHERS => '0'); -- END
 					END IF;
 				ELSIF IR(n-5 DOWNTO n-7) = "100" THEN
 					-- BLS instruction
 					IF status_C = 0 OR status_Z = 1 THEN
-						load <= -- row 92 (Branch Offset)
+						load <= std_logic_vector(to_unsigned(85, load'length)); -- Branch Offset
 					ELSE
 						load <= (OTHERS => '0'); -- END
 					END IF;
 				ELSIF IR(n-5 DOWNTO n-7) = "101" THEN
 					-- BHI instruction
 					IF status_C = 1 THEN
-						load <= -- row 92 (Branch Offset)
+						load <= std_logic_vector(to_unsigned(85, load'length)); -- Branch Offset
 					ELSE
 						load <= (OTHERS => '0'); -- END
 					END IF;
 				ELSIF IR(n-5 DOWNTO n-7) = "110" THEN
 					-- BHS instruction
 					IF status_C = 1 OR status_Z = 1 THEN
-						load <= -- row 92 (Branch Offset)
+						load <= std_logic_vector(to_unsigned(85, load'length)); -- Branch Offset
 					ELSE
 						load <= (OTHERS => '0'); -- END
 					END IF;
@@ -126,11 +126,11 @@ begin
 			END IF;
 			
 			IF (signed(controlStepCounter) = 6) THEN -- row 94: µ-PC <= PLA(IR)$ [Double Operand]::ADD SRC, DST
-				load <= -- row 48 (ADD SRC, DST)
+				load <= std_logic_vector(to_unsigned(43, load'length)); -- row 48 (ADD SRC, DST)
 			END IF;
 
 			IF (signed(controlStepCounter) = 9) THEN -- row 50: µ-PC <= PLA(IR)$ [Move Z to PC]
-				load <= -- row 95 (MOV Z to PC)
+				load <= std_logic_vector(to_unsigned(88, load'length)); -- row 95 (MOV Z to PC)
 			END IF;
 
 			IF (signed(controlStepCounter) = 11) THEN -- row 96: END
@@ -146,8 +146,8 @@ begin
 			ELSIF IR(n-5 DOWNTO n-8) = "0001" THEN
 				-- NOP instruction
 				load <= (OTHERS => '0');
-			ELSIF IR(n-5 DOWNTO n-8) = "0010" THEN
-				-- RESET instruction (CANCELLED)
+			-- ELSIF IR(n-5 DOWNTO n-8) = "0010" THEN
+			-- 	-- RESET instruction (CANCELLED)
 			END IF;
 
 			
@@ -156,15 +156,15 @@ begin
 			IF IR(n-5 DOWNTO n-8) = "0000" THEN
 				-- JSR instruction
 				IF signed(controlStepCounter) = 3 THEN
-					load <= -- row 102 (JSR)
+					load <= std_logic_vector(to_unsigned(93, load'length)); -- row 102 (JSR)
 				END IF;
 
 				IF signed(ControlStepCounter) = 8 THEN
-					load <= -- row 124 (PUSH)
+					load <= std_logic_vector(to_unsigned(115, load'length)); -- row 124 (PUSH)
 				END IF;
 
 				IF signed(ControlStepCounter) = 11 THEN
-					load <= -- row 107 (JSR AFTER PUSH)
+					load <= std_logic_vector(to_unsigned(98, load'length)); -- row 107 (JSR AFTER PUSH)
 				END IF;
 
 				IF signed(ControlStepCounter) = 13 THEN
@@ -174,7 +174,7 @@ begin
 			ELSIF IR(n-5 DOWNTO n-8) = "0001" THEN
 				-- RTS instruction
 				IF signed(controlStepCounter) = 3 THEN
-					load <= -- row 116 (Start RTS)
+					load <= std_logic_vector(to_unsigned(107, load'length)); -- row 116 (Start RTS)
 				END IF;
 
 				IF signed(ControlStepCounter) = 7 THEN
@@ -184,15 +184,15 @@ begin
 			ELSIF IR(n-5 DOWNTO n-8) = "0010" THEN
 				-- INTERRUPT instruction
 				IF signed(controlStepCounter) = 3 THEN
-					load <= -- row 109 (INTERRUPT)
+					load <= std_logic_vector(to_unsigned(100, load'length)); -- row 109 (INTERRUPT)
 				END IF;
 
 				IF signed(ControlStepCounter) = 5 THEN
-					load <= -- row 124 (PUSH)
+					load <= std_logic_vector(to_unsigned(115, load'length)); -- row 124 (PUSH)
 				END IF;
 
 				IF signed(ControlStepCounter) = 8 THEN
-					load <= -- row 111 (INTERRUPT AFTER PUSH)
+					load <= std_logic_vector(to_unsigned(102, load'length)); -- row 111 (INTERRUPT AFTER PUSH)
 				END IF;
 
 				IF signed(ControlStepCounter) = 13 THEN
@@ -202,15 +202,15 @@ begin
 			ELSIF IR(n-5 DOWNTO n-8) = "0011" THEN
 				-- IRET instruction
 				IF signed(controlStepCounter) = 3 THEN
-					load <= -- row 116 (Start RTS)
+					load <= std_logic_vector(to_unsigned(107, load'length)); -- row 116 (Start RTS)
 				END IF;
 
 				IF signed(ControlStepCounter) = 7 THEN
-					load <= -- row 120 (PUSH)
+					load <= std_logic_vector(to_unsigned(111, load'length)); -- row 120 (PUSH)
 				END IF;
 
 				IF signed(ControlStepCounter) = 8 THEN
-					load <= -- row 111 (INTERRUPT AFTER PUSH)
+					load <= std_logic_vector(to_unsigned(102, load'length)); -- row 111 (INTERRUPT AFTER PUSH)
 				END IF;
 
 				IF signed(ControlStepCounter) = 11 THEN
