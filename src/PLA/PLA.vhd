@@ -112,8 +112,10 @@ begin
 		ELSIF IR(n-1 DOWNTO 12) = "1010" THEN
 			-- no op instruction
 			IF IR(n-5 DOWNTO n-8) = "0000" THEN
+				-- HALT instruction
 				halt <= '1';
 			ELSIF IR(n-5 DOWNTO n-8) = "0001" THEN
+				-- NOP instruction
 				load <= (OTHERS => '0');
 			ELSIF IR(n-5 DOWNTO n-8) = "0010" THEN
 				-- RESET instruction (CANCELLED)
@@ -124,12 +126,67 @@ begin
 			-- jump instruction
 			IF IR(n-5 DOWNTO n-8) = "0000" THEN
 				-- JSR instruction
+				IF signed(controlStepCounter) = 3 THEN
+					load <= -- row 102 (JSR)
+				END IF;
+
+				IF signed(ControlStepCounter) = 8 THEN
+					load <= -- row 124 (PUSH)
+				END IF;
+
+				IF signed(ControlStepCounter) = 11 THEN
+					load <= -- row 107 (JSR AFTER PUSH)
+				END IF;
+
+				IF signed(ControlStepCounter) = 13 THEN
+					load <= (OTHERS => '0'); -- END
+				END IF;
+
 			ELSIF IR(n-5 DOWNTO n-8) = "0001" THEN
 				-- RTS instruction
+				IF signed(controlStepCounter) = 3 THEN
+					load <= -- row 116 (Start RTS)
+				END IF;
+
+				IF signed(ControlStepCounter) = 7 THEN
+					load <= (OTHERS => '0'); -- END
+				END IF;
+				
 			ELSIF IR(n-5 DOWNTO n-8) = "0010" THEN
 				-- INTERRUPT instruction
+				IF signed(controlStepCounter) = 3 THEN
+					load <= -- row 109 (INTERRUPT)
+				END IF;
+
+				IF signed(ControlStepCounter) = 5 THEN
+					load <= -- row 124 (PUSH)
+				END IF;
+
+				IF signed(ControlStepCounter) = 8 THEN
+					load <= -- row 111 (INTERRUPT AFTER PUSH)
+				END IF;
+
+				IF signed(ControlStepCounter) = 13 THEN
+					load <= (OTHERS <= '0') -- END
+				END IF;
+
 			ELSIF IR(n-5 DOWNTO n-8) = "0011" THEN
 				-- IRET instruction
+				IF signed(controlStepCounter) = 3 THEN
+					load <= -- row 116 (Start RTS)
+				END IF;
+
+				IF signed(ControlStepCounter) = 7 THEN
+					load <= -- row 120 (PUSH)
+				END IF;
+
+				IF signed(ControlStepCounter) = 8 THEN
+					load <= -- row 111 (INTERRUPT AFTER PUSH)
+				END IF;
+
+				IF signed(ControlStepCounter) = 11 THEN
+					load <= (OTHERS <= '0') -- END
+				END IF;
 			END IF;
 
 			
