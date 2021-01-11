@@ -38,10 +38,6 @@ architecture controlWordDecoder_arch of controlWordDecoder is
     signal F4_decoder_out: std_logic_vector(3 downto 0);
     signal F4_decoded: std_logic_vector(2 downto 0);
 
-    --F5 signals
-    signal F5_decoder_en: std_logic;
-    signal F5_decoded: std_logic_vector(15 downto 0);
-
     --F6 signals
     signal F6_decoder_en: std_logic;
     signal F6_decoder_out: std_logic_vector(3 downto 0);
