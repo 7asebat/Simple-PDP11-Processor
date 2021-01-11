@@ -9,6 +9,7 @@ ENTITY nmRam IS
     m: INTEGER := 32
   );
 	PORT(
+    MFC: OUT std_logic;
     clk: IN std_logic;
     wr: IN std_logic;
     address: IN std_logic_vector(integer(ceil(log2(real(n))))-1 DOWNTO 0);
@@ -35,6 +36,9 @@ BEGIN
   IF(rising_edge(clk)) THEN
     IF(wr = '1') THEN
       ram(to_integer(unsigned(address))) <= dataIn;
+      MFC <= '1';
+    else
+      MFC <= '0';
     END IF;
   END IF;
 END PROCESS;
