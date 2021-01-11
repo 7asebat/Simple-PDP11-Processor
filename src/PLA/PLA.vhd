@@ -43,32 +43,141 @@ begin
 		VARIABLE INDEXED					: std_logic_vector(2 DOWNTO 0) := '110';
 		VARIABLE INDEXED_INDIRECT			: std_logic_vector(2 DOWNTO 0) := '111';
 
+		-- PRE-INSTRUCTIONS
+		VARIABLE  INC_INSTRUCTION : std_logic_vector(3 downto 0) := "0000";
+
+		-- ONE OP OPERANDS ( Without pre one op )
+		VARIABLE  INC_INSTRUCTION : std_logic_vector(3 downto 0) := "0000";
+		VARIABLE  DEC_INSTRUCTION : std_logic_vector(3 downto 0) := "0001";
+		VARIABLE  CLR_INSTRUCTION : std_logic_vector(3 downto 0) := "0010";
+		VARIABLE  INV_INSTRUCTION : std_logic_vector(3 downto 0) := "0011";
+		VARIABLE  LSR_INSTRUCTION : std_logic_vector(3 downto 0) := "0100";
+		VARIABLE  ROR_INSTRUCTION : std_logic_vector(3 downto 0) := "0101";
+		VARIABLE  ASR_INSTRUCTION : std_logic_vector(3 downto 0)  := "0110";
+		VARIABLE  LSL_INSTRUCTION : std_logic_vector(3 downto 0) := "0111";
+		VARIABLE  ROL_INSTRUCTION : std_logic_vector(3 downto 0) := "1000";
+
 	BEGIN
-		IF IR(n-1 DOWNTO n-4) = "1001" AND (signed(controlStepCounter) = 3) THEN
+		IF IR(n-1 DOWNTO n-4) = "1001" THEN
 			-- one op instruction
 			
+			-- STEP ONE: FETCH DESTINATION
+			IF (signed(controlStepCounter) = 3) THEN
 
-			-- REVISIT THE INDICES
-			-- destination fetching
-			IF IR(n-9 DOWNTO n-11) = REG_DIRECT THEN
-				-- reg direct
-				load <= std_logic_vector(to_unsigned(5, load'length));
+				-- destination fetching
+				IF IR(n-9 DOWNTO n-11) = REG_DIRECT THEN
+					-- reg direct
+					load <= std_logic_vector(to_unsigned(22, load'length));
 		
-			ELSIF IR(n-9 DOWNTO n-11) = REG_INDIRECT THEN
-				-- reg indirect instruction
-				load <= std_logic_vector(to_unsigned(7, load'length));
-			
-			ELSIF IR(n-9 DOWNTO n-11) = AUTO_INCREMENT THEN
-				-- auto increment instruction [SHOULD HANDLE DIRECT AND INDIRECT]
-				load <= std_logic_vector(to_unsigned(9, load'length));
+				ELSIF IR(n-9 DOWNTO n-11) = REG_INDIRECT THEN
+					-- reg indirect instruction
+					load <= std_logic_vector(to_unsigned(24, load'length));
+				
+				ELSIF IR(n-9 DOWNTO n-11) = AUTO_INCREMENT THEN
+					-- auto increment instruction [SHOULD HANDLE DIRECT AND INDIRECT]
+					load <= std_logic_vector(to_unsigned(26, load'length));
 
-			ELSIF IR(n-9 DOWNTO n-11) = AUTO_DECREMENT THEN
-				-- auto decrement instruction [SHOULD HANDLE DIRECT AND INDIRECT]
-				load <= std_logic_vector(to_unsigned(12, load'length));
+				ELSIF IR(n-9 DOWNTO n-11) = AUTO_DECREMENT THEN
+					-- auto decrement instruction [SHOULD HANDLE DIRECT AND INDIRECT]
+					load <= std_logic_vector(to_unsigned(29, load'length));
 
-			ELSIF IR(n-9 DOWNTO n-11) = INDEXED THEN
-				-- indexed instruction [SHOULD HANDLE DIRECT AND INDIRECT]
-				load <= std_logic_vector(to_unsigned(15, load'length));
+				ELSIF IR(n-9 DOWNTO n-11) = INDEXED THEN
+					-- indexed instruction [SHOULD HANDLE DIRECT AND INDIRECT]
+					load <= std_logic_vector(to_unsigned(32, load'length));
+				END IF;
+
+			END IF;
+
+			IF signed(controlStepCounter) = 5 THEN
+				-- JUMP TO OPERAND INSTRUCTION
+				
+				IF IR(n-9 DOWNTO n-11) = REG_DIRECT THEN
+
+					-- GO TO THE INSTRUCTION
+					IF IR(n-5 DOWNTO n-8) = INC_INSTRUCTION THEN
+						load <= std_logic_vector(to_unsigned(67, load'length));
+
+					ELSIF IR(n-5 DOWNTO n-8) = DEC_INSTRUCTION THEN
+						load <= std_logic_vector(to_unsigned(69, load'length));
+
+					ELSIF IR(n-5 DOWNTO n-8) = CLR_INSTRUCTION THEN 
+						load <= std_logic_vector(to_unsigned(71, load'length));
+
+					ELSIF IR(n-5 DOWNTO n-8) = INV_INSTRUCTION THEN 
+						load <= std_logic_vector(to_unsigned(73, load'length));
+
+					ELSIF IR(n-5 DOWNTO n-8) = LSR_INSTRUCTION THEN 
+						load <= std_logic_vector(to_unsigned(75, load'length));
+
+					ELSIF IR(n-5 DOWNTO n-8) = ROR_INSTRUCTION THEN 
+						load <= std_logic_vector(to_unsigned(77, load'length));
+
+					ELSIF IR(n-5 DOWNTO n-8) = ASR_INSTRUCTION THEN 
+						load <= std_logic_vector(to_unsigned(79, load'length));
+
+					ELSIF IR(n-5 DOWNTO n-8) = LSL_INSTRUCTION THEN
+						load <= std_logic_vector(to_unsigned(81, load'length));
+
+					ELSIF IR(n-5 DOWNTO n-8) = ROL_INSTRUCTION THEN
+						load <= std_logic_vector(to_unsigned(83, load'length));
+					END IF;  
+
+				ELSIF  IR(n-9 DOWNTO n-11) = REG_INDIRECT THEN
+					load <= std_logic_vector(to_unsigned(39, load'length));
+				
+				END IF;
+			END IF;
+
+			IF (
+				( signed(controlStepCounter) = 6 AND IR(n-9 DOWNTO n-11) = AUTO_INCREMENT ) OR
+				( signed(controlStepCounter) = 6 AND IR(n-9 DOWNTO n-11) = AUTO_DECREMENT ) OR 
+				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = INDEXED )
+			 ) THEN
+				load <= std_logic_vector(to_unsigned(38, load'length));
+			END IF;
+
+			IF (
+				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = AUTO_INCREMENT ) OR
+				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = AUTO_DECREMENT ) OR
+				( signed(controlStepCounter) = 12 AND IR(n-9 DOWNTO n-11) = INDEXED ) OR 
+			) THEN
+				-- GO TO THE INSTRUCTION
+				IF IR(n-5 DOWNTO n-8) = INC_INSTRUCTION THEN
+					load <= std_logic_vector(to_unsigned(67, load'length));
+
+				ELSIF IR(n-5 DOWNTO n-8) = DEC_INSTRUCTION THEN
+					load <= std_logic_vector(to_unsigned(69, load'length));
+
+				ELSIF IR(n-5 DOWNTO n-8) = CLR_INSTRUCTION THEN 
+					load <= std_logic_vector(to_unsigned(71, load'length));
+
+				ELSIF IR(n-5 DOWNTO n-8) = INV_INSTRUCTION THEN 
+					load <= std_logic_vector(to_unsigned(73, load'length));
+
+				ELSIF IR(n-5 DOWNTO n-8) = LSR_INSTRUCTION THEN 
+					load <= std_logic_vector(to_unsigned(75, load'length));
+
+				ELSIF IR(n-5 DOWNTO n-8) = ROR_INSTRUCTION THEN 
+					load <= std_logic_vector(to_unsigned(77, load'length));
+
+				ELSIF IR(n-5 DOWNTO n-8) = ASR_INSTRUCTION THEN 
+					load <= std_logic_vector(to_unsigned(79, load'length));
+
+				ELSIF IR(n-5 DOWNTO n-8) = LSL_INSTRUCTION THEN
+					load <= std_logic_vector(to_unsigned(81, load'length));
+
+				ELSIF IR(n-5 DOWNTO n-8) = ROL_INSTRUCTION THEN
+					load <= std_logic_vector(to_unsigned(83, load'length));
+				END IF;
+			END IF;
+
+			IF  signed(controlStepCounter) > 12 THEN
+				-- Move Z to Rdst
+				IF IR(n-9 DOWNTO n-11) = REG_DIRECT THEN
+					load <= std_logic_vector(to_unsigned(118, load'length));
+				ELSE 
+					load <= std_logic_vector(to_unsigned(120, load'length));
+				END IF;
 			END IF;
 				
 			
