@@ -20,7 +20,29 @@ begin
 	status_Z <= statusRegister(1);
 	status_V <= statusRegister(2);
 	status_C <= statusRegister(3);
+
 	PROCESS (IR, controlStepCounter)
+		-- DOUBLE OPERANDS
+		VARIABLE MOV_INSTRUCTION : std_logic_vector(3 downto 0) := "0000";
+		VARIABLE ADD_INSTRUCTION : std_logic_vector(3 downto 0) := "0001";
+		VARIABLE ADC_INSTRUCTION : std_logic_vector(3 downto 0) := "0010";
+		VARIABLE SUB_INSTRUCTION : std_logic_vector(3 downto 0) := "0011";
+		VARIABLE SBC_INSTRUCTION : std_logic_vector(3 downto 0) := "0100";
+		VARIABLE AND_INSTRUCTION : std_logic_vector(3 downto 0) := "0101";
+		VARIABLE OR_INSTRUCTION : std_logic_vector(3 downto 0)  := "0110";
+		VARIABLE XOR_INSTRUCTION : std_logic_vector(3 downto 0) := "0111";
+		VARIABLE CMP_INSTRUCTION : std_logic_vector(3 downto 0) := "1000";
+
+		-- ADDRESSING MODES
+		VARIABLE REG_DIRECT					: std_logic_vector(2 DOWNTO 0) := '000';
+		VARIABLE REG_INDIRECT				: std_logic_vector(2 DOWNTO 0) := '001';
+		VARIABLE AUTO_INCREMENT				: std_logic_vector(2 DOWNTO 0) := '010';
+		VARIABLE AUTO_INCREMENT_IDIRECT		: std_logic_vector(2 DOWNTO 0) := '011';
+		VARIABLE AUTO_DECREMENT				: std_logic_vector(2 DOWNTO 0) := '100';
+		VARIABLE AUTO_DECREMENT_INDIRECT	: std_logic_vector(2 DOWNTO 0) := '101';
+		VARIABLE INDEXED					: std_logic_vector(2 DOWNTO 0) := '110';
+		VARIABLE INDEXED_INDIRECT			: std_logic_vector(2 DOWNTO 0) := '111';
+
 	BEGIN
 		IF IR(n-1 DOWNTO n-4) = "1001" AND (signed(controlStepCounter) = 3) THEN
 			-- one op instruction
@@ -28,23 +50,23 @@ begin
 
 			-- REVISIT THE INDICES
 			-- destination fetching
-			IF IR(n-9 DOWNTO n-11) = "000" THEN
+			IF IR(n-9 DOWNTO n-11) = REG_DIRECT THEN
 				-- reg direct
 				load <= std_logic_vector(to_unsigned(5, load'length));
 		
-			ELSIF IR(n-9 DOWNTO n-11) = "001" THEN
+			ELSIF IR(n-9 DOWNTO n-11) = REG_INDIRECT THEN
 				-- reg indirect instruction
 				load <= std_logic_vector(to_unsigned(7, load'length));
 			
-			ELSIF IR(n-9 DOWNTO n-11) = "010" THEN
+			ELSIF IR(n-9 DOWNTO n-11) = AUTO_INCREMENT THEN
 				-- auto increment instruction [SHOULD HANDLE DIRECT AND INDIRECT]
 				load <= std_logic_vector(to_unsigned(9, load'length));
 
-			ELSIF IR(n-9 DOWNTO n-11) = "100" THEN
+			ELSIF IR(n-9 DOWNTO n-11) = AUTO_DECREMENT THEN
 				-- auto decrement instruction [SHOULD HANDLE DIRECT AND INDIRECT]
 				load <= std_logic_vector(to_unsigned(12, load'length));
 
-			ELSIF IR(n-9 DOWNTO n-11) = "110" THEN
+			ELSIF IR(n-9 DOWNTO n-11) = INDEXED THEN
 				-- indexed instruction [SHOULD HANDLE DIRECT AND INDIRECT]
 				load <= std_logic_vector(to_unsigned(15, load'length));
 			END IF;
@@ -158,23 +180,23 @@ begin
 			-- FIRST STEP: SOURCE FETCHING
 			IF (signed(controlStepCounter) = 3) THEN
 				--SOURCE FETCHING
-				IF IR(n-5 DOWNTO n-7) = "000" THEN
+				IF IR(n-5 DOWNTO n-7) = REG_DIRECT THEN
 					-- reg direct
 					load <= std_logic_vector(to_unsigned(4, load'length));
 			
-				ELSIF IR(n-5 DOWNTO n-7) = "001" THEN
+				ELSIF IR(n-5 DOWNTO n-7) = REG_INDIRECT THEN
 					-- reg indirect instruction
 					load <= std_logic_vector(to_unsigned(6, load'length));
 				
-				ELSIF IR(n-5 DOWNTO n-7) = "010" THEN
+				ELSIF IR(n-5 DOWNTO n-7) = AUTO_INCREMENT THEN
 					-- auto increment instruction [SHOULD HANDLE DIRECT AND INDIRECT]
 					load <= std_logic_vector(to_unsigned(8, load'length));
 
-				ELSIF IR(n-5 DOWNTO n-7) = "100" THEN
+				ELSIF IR(n-5 DOWNTO n-7) = AUTO_DECREMENT THEN
 					-- auto decrement instruction [SHOULD HANDLE DIRECT AND INDIRECT]
 					load <= std_logic_vector(to_unsigned(11, load'length));
 
-				ELSIF IR(n-5 DOWNTO n-7) = "110" THEN
+				ELSIF IR(n-5 DOWNTO n-7) = INDEXED THEN
 					-- indexed instruction [SHOULD HANDLE DIRECT AND INDIRECT]
 					load <= std_logic_vector(to_unsigned(14, load'length));
 				END IF;
@@ -186,23 +208,23 @@ begin
 			IF  signed(controlStepCounter) = 5 AND IR(n-5 DOWNTO n-7) = "000" THEN
 				
 				--DEST FETCHING
-				IF IR(n-11 DOWNTO n-13) = "000" THEN
+				IF IR(n-11 DOWNTO n-13) = REG_DIRECT THEN
 					-- reg direct
 					load <= std_logic_vector(to_unsigned(22, load'length));
 			
-				ELSIF IR(n-11 DOWNTO n-13) = "001" THEN
+				ELSIF IR(n-11 DOWNTO n-13) = REG_INDIRECT THEN
 					-- reg indirect instruction
 					load <= std_logic_vector(to_unsigned(24, load'length));
 				
-				ELSIF IR(n-11 DOWNTO n-13) = "010" THEN
+				ELSIF IR(n-11 DOWNTO n-13) = AUTO_INCREMENT THEN
 					-- auto increment instruction [SHOULD HANDLE DIRECT AND INDIRECT]
 					load <= std_logic_vector(to_unsigned(26, load'length));
 
-				ELSIF IR(n-11 DOWNTO n-13) = "100" THEN
+				ELSIF IR(n-11 DOWNTO n-13) = AUTO_DECREMENT THEN
 					-- auto decrement instruction [SHOULD HANDLE DIRECT AND INDIRECT]
 					load <= std_logic_vector(to_unsigned(29, load'length));
 
-				ELSIF IR(n-11 DOWNTO n-13) = "110" THEN
+				ELSIF IR(n-11 DOWNTO n-13) = INDEXED THEN
 					-- indexed instruction [SHOULD HANDLE DIRECT AND INDIRECT]
 					load <= std_logic_vector(to_unsigned(32, load'length));
 				END IF;
@@ -227,39 +249,39 @@ begin
 				-- JUMP TO OPERAND INSTRUCTION
 				
 				-- CHECKING INSTRUCTION
-				IF IR(n-1 DOWNTO n-4) = "0000" THEN
+				IF IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION THEN
 					-- MOV INSTRUCTION
 					load <= std_logic_vector(to_unsigned(41, load'length))
 
-				ELSIF IR(n-1 DOWNTO n-4) = "0001" THEN
+				ELSIF IR(n-1 DOWNTO n-4) = ADD_INSTRUCTION THEN
 					-- ADD INSTRUCTION
 					load <= std_logic_vector(to_unsigned(43, load'length))
 
-				ELSIF IR(n-1 DOWNTO n-4) = "0010" THEN
+				ELSIF IR(n-1 DOWNTO n-4) = ADC_INSTRUCTION THEN
 					-- ADC INSTRUCTION
 					load <= std_logic_vector(to_unsigned(46, load'length))
 
-				ELSIF IR(n-1 DOWNTO n-4) = "0011" THEN
+				ELSIF IR(n-1 DOWNTO n-4) = SUB_INSTRUCTION THEN
 					-- SUB INSTRUCTION
 					load <= std_logic_vector(to_unsigned(49, load'length))
 
-				ELSIF IR(n-1 DOWNTO n-4) = "0100" THEN
+				ELSIF IR(n-1 DOWNTO n-4) = SBC_INSTRUCTION THEN
 					-- SBC INSTRUCTION
 					load <= std_logic_vector(to_unsigned(52, load'length))
 
-				ELSIF IR(n-1 DOWNTO n-4) = "0101" THEN
+				ELSIF IR(n-1 DOWNTO n-4) = AND_INSTRUCTION THEN
 					-- AND INSTRUCTION
 					load <= std_logic_vector(to_unsigned(55, load'length))
 
-				ELSIF IR(n-1 DOWNTO n-4) = "0110" THEN
+				ELSIF IR(n-1 DOWNTO n-4) = OR_INSTRUCTION THEN
 					-- OR INSTRUCTION
 					load <= std_logic_vector(to_unsigned(58, load'length))
 
-				ELSIF IR(n-1 DOWNTO n-4) = "0111" THEN
+				ELSIF IR(n-1 DOWNTO n-4) = XOR_INSTRUCTION THEN
 					-- XOR INSTRUCTION
 					load <= std_logic_vector(to_unsigned(61, load'length))
 
-				ELSIF IR(n-1 DOWNTO n-4) = "1000" THEN
+				ELSIF IR(n-1 DOWNTO n-4) = CMP_INSTRUCTION THEN
 					-- CMP INSTRUCTION
 					load <= std_logic_vector(to_unsigned(64, load'length))
 
