@@ -20,7 +20,7 @@ begin
 	status_Z <= statusRegister(1);
 	status_V <= statusRegister(2);
 	status_C <= statusRegister(3);
-	PROCESS (IR)
+	PROCESS (IR, controlStepCounter)
 	BEGIN
 		IF IR(n-1 DOWNTO n-4) = "1001" AND (signed(controlStepCounter) = 3) THEN
 			-- one op instruction
@@ -42,6 +42,7 @@ begin
 				-- indexed instruction
 			ELSIF IR(n-9 DOWNTO n-11) = "111" THEN
 				-- indexed indirect instruction
+			END IF;
 			
 
 		ELSIF  IR(n-1 DOWNTO 14) = "11" THEN
@@ -129,7 +130,7 @@ begin
 				-- INTERRUPT instruction
 			ELSIF IR(n-5 DOWNTO n-8) = "0011" THEN
 				-- IRET instruction
-			END IF
+			END IF;
 
 			
 		ELSIF IR(n-1 DOWNTO 12) = "0000" THEN
