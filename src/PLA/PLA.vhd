@@ -221,13 +221,84 @@ begin
 				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = "110")
 			) THEN
 				load <= std_logic_vector(to_unsigned(20, load'length))
-
 			END IF;
 
+			IF signed(controlStepCounter) = 23 THEN
+				-- JUMP TO OPERAND INSTRUCTION
+				
+				-- CHECKING INSTRUCTION
+				IF IR(n-1 DOWNTO n-4) = "0000" THEN
+					-- MOV INSTRUCTION
+					load <= std_logic_vector(to_unsigned(41, load'length))
+
+				ELSIF IR(n-1 DOWNTO n-4) = "0001" THEN
+					-- ADD INSTRUCTION
+					load <= std_logic_vector(to_unsigned(43, load'length))
+
+				ELSIF IR(n-1 DOWNTO n-4) = "0010" THEN
+					-- ADC INSTRUCTION
+					load <= std_logic_vector(to_unsigned(46, load'length))
+
+				ELSIF IR(n-1 DOWNTO n-4) = "0011" THEN
+					-- SUB INSTRUCTION
+					load <= std_logic_vector(to_unsigned(49, load'length))
+
+				ELSIF IR(n-1 DOWNTO n-4) = "0100" THEN
+					-- SBC INSTRUCTION
+					load <= std_logic_vector(to_unsigned(52, load'length))
+
+				ELSIF IR(n-1 DOWNTO n-4) = "0101" THEN
+					-- AND INSTRUCTION
+					load <= std_logic_vector(to_unsigned(55, load'length))
+
+				ELSIF IR(n-1 DOWNTO n-4) = "0110" THEN
+					-- OR INSTRUCTION
+					load <= std_logic_vector(to_unsigned(58, load'length))
+
+				ELSIF IR(n-1 DOWNTO n-4) = "0111" THEN
+					-- XOR INSTRUCTION
+					load <= std_logic_vector(to_unsigned(61, load'length))
+
+				ELSIF IR(n-1 DOWNTO n-4) = "1000" THEN
+					-- CMP INSTRUCTION
+					load <= std_logic_vector(to_unsigned(64, load'length))
+
+				END IF;
+			END IF;
+
+			IF signed(controlStepCounter) = 25 THEN
+				load <= std_logic_vector(to_unsigned(39, load'length))
+			END IF;
+
+			IF (
+				signed(controlStepCounter) = 28 OR
+				signed(controlStepCounter) = 31 OR
+				signed(controlStepCounter) = 37
+			) THEN
+				load <= std_logic_vector(to_unsigned(38, load'length))
+			END IF;
+
+			IF (
+				signed(controlStepCounter) = 42 OR
+				signed(controlStepCounter) = 45 OR
+				signed(controlStepCounter) = 48 OR
+				signed(controlStepCounter) = 51 OR
+				signed(controlStepCounter) = 54 OR
+				signed(controlStepCounter) = 57 OR
+				signed(controlStepCounter) = 60 OR
+				signed(controlStepCounter) = 63 OR
+			) THEN
+
+				-- DEST FETCHING
+				IF IR(n-11 DOWNTO n-13) = "000" THEN
+					-- reg direct
+					load <= std_logic_vector(to_unsigned(118, load'length));
+				ELSE 
+					load <= std_logic_vector(to_unsigned(120, load'length));
+				END IF;
+			END IF;
 
 		ELSIF  THEN
-	
-		
 		
 		ELSE
 		END IF;
