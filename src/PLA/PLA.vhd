@@ -43,9 +43,6 @@ begin
 		VARIABLE INDEXED					: std_logic_vector(2 DOWNTO 0) := "110";
 		VARIABLE INDEXED_INDIRECT			: std_logic_vector(2 DOWNTO 0) := "111";
 
-		-- PRE-INSTRUCTIONS
-		VARIABLE  INC_INSTRUCTION : std_logic_vector(3 downto 0) := "0000";
-
 		-- ONE OP OPERANDS ( Without pre one op )
 		VARIABLE  INC_INSTRUCTION : std_logic_vector(3 downto 0) := "0000";
 		VARIABLE  DEC_INSTRUCTION : std_logic_vector(3 downto 0) := "0001";
@@ -139,7 +136,7 @@ begin
 			IF (
 				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = AUTO_INCREMENT ) OR
 				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = AUTO_DECREMENT ) OR
-				( signed(controlStepCounter) = 12 AND IR(n-9 DOWNTO n-11) = INDEXED ) OR 
+				( signed(controlStepCounter) = 12 AND IR(n-9 DOWNTO n-11) = INDEXED ) 
 			) THEN
 				-- GO TO THE INSTRUCTION
 				IF IR(n-5 DOWNTO n-8) = INC_INSTRUCTION THEN
