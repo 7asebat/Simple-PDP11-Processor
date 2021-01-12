@@ -128,11 +128,17 @@ begin
 					-- reg indirect instruction
 					load <= std_logic_vector(to_unsigned(CONTROL_DESTINATION_INDIRECT_REGISTER, load'length));
 				
-				ELSIF IR(n-9 DOWNTO n-11) = AUTO_INCREMENT THEN
+				ELSIF (
+					IR(n-9 DOWNTO n-11) = AUTO_INCREMENT OR
+					IR(n-9 DOWNTO n-11) = AUTO_INCREMENT_INDIRECT
+				) THEN
 					-- auto increment instruction [SHOULD HANDLE DIRECT AND INDIRECT]
 					load <= std_logic_vector(to_unsigned(CONTROL_DESTINATION_AUTOINCREMENT, load'length));
 
-				ELSIF IR(n-9 DOWNTO n-11) = AUTO_DECREMENT THEN
+				ELSIF (
+					IR(n-9 DOWNTO n-11) = AUTO_DECREMENT OR
+					IR(n-9 DOWNTO n-11) = AUTO_DECREMENT_INDIRECT 
+				) THEN
 					-- auto decrement instruction [SHOULD HANDLE DIRECT AND INDIRECT]
 					load <= std_logic_vector(to_unsigned(CONTROL_DESTINATION_AUTODECREMENT, load'length));
 
@@ -143,55 +149,26 @@ begin
 
 			END IF;
 
-			IF signed(controlStepCounter) = 5 THEN
-				-- JUMP TO OPERAND INSTRUCTION
-				
-				IF IR(n-9 DOWNTO n-11) = REG_DIRECT THEN
-
-					-- GO TO THE INSTRUCTION
-					IF IR(n-5 DOWNTO n-8) = INC_INSTRUCTION THEN
-						load <= std_logic_vector(to_unsigned(CONTROL_INC, load'length));
-
-					ELSIF IR(n-5 DOWNTO n-8) = DEC_INSTRUCTION THEN
-						load <= std_logic_vector(to_unsigned(CONTROL_DEC, load'length));
-
-					ELSIF IR(n-5 DOWNTO n-8) = CLR_INSTRUCTION THEN 
-						load <= std_logic_vector(to_unsigned(CONTROL_CLR, load'length));
-
-					ELSIF IR(n-5 DOWNTO n-8) = INV_INSTRUCTION THEN 
-						load <= std_logic_vector(to_unsigned(CONTROL_INV, load'length));
-
-					ELSIF IR(n-5 DOWNTO n-8) = LSR_INSTRUCTION THEN 
-						load <= std_logic_vector(to_unsigned(CONTROL_LSR, load'length));
-
-					ELSIF IR(n-5 DOWNTO n-8) = ROR_INSTRUCTION THEN 
-						load <= std_logic_vector(to_unsigned(CONTROL_ROR, load'length));
-
-					ELSIF IR(n-5 DOWNTO n-8) = ASR_INSTRUCTION THEN 
-						load <= std_logic_vector(to_unsigned(CONTROL_ASR, load'length));
-
-					ELSIF IR(n-5 DOWNTO n-8) = LSL_INSTRUCTION THEN
-						load <= std_logic_vector(to_unsigned(CONTROL_LSL, load'length));
-
-					ELSIF IR(n-5 DOWNTO n-8) = ROL_INSTRUCTION THEN
-						load <= std_logic_vector(to_unsigned(CONTROL_ROL, load'length));
-					END IF;  
-
-				ELSIF  IR(n-9 DOWNTO n-11) = REG_INDIRECT THEN
-					load <= std_logic_vector(to_unsigned(CONTROL_MOV_MDR_TO_DST, load'length));
-				
-				END IF;
-			END IF;
-
 			IF (
+				( signed(controlStepCounter) = 5 AND IR(n-9 DOWNTO n-11) = REG_INDIRECT ) OR
 				( signed(controlStepCounter) = 6 AND IR(n-9 DOWNTO n-11) = AUTO_INCREMENT ) OR
 				( signed(controlStepCounter) = 6 AND IR(n-9 DOWNTO n-11) = AUTO_DECREMENT ) OR 
 				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = INDEXED )
 			 ) THEN
-				load <= std_logic_vector(to_unsigned(38, load'length));
+				load <= std_logic_vector(to_unsigned(CONTROL_MOV_MDR_TO_DST, load'length));
+			END IF;
+			
+			IF (
+				( signed(controlStepCounter) = 6 AND IR(n-9 DOWNTO n-11) = AUTO_INCREMENT_INDIRECT ) OR
+				( signed(controlStepCounter) = 6 AND IR(n-9 DOWNTO n-11) = AUTO_DECREMENT_INDIRECT ) OR 
+				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = INDEXED_INDIRECT )
+			 ) THEN
+				load <= std_logic_vector(to_unsigned(CONTROL_DESTINATION_INDIRECT, load'length));
 			END IF;
 
+			-- GO TO INSTRUCTION
 			IF (
+				( signed(controlStepCounter) = 5 AND IR(n-9 DOWNTO n-11) = DIRECT) OR
 				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = AUTO_INCREMENT ) OR
 				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = AUTO_DECREMENT ) OR
 				( signed(controlStepCounter) = 12 AND IR(n-9 DOWNTO n-11) = INDEXED ) 
