@@ -435,7 +435,7 @@ begin
 				(signed(controlStepCounter) = 9 AND IR(n-5 DOWNTO n-7) = INDEXED) OR 
 				(signed(controlStepCounter) = 9 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT)
 			) THEN
-				load <= std_logic_vector(to_unsigned(20, load'length));
+				load <= std_logic_vector(to_unsigned(CONTROL_MOV_MDR_TO_SRC, load'length));
 			END IF;
 
 
@@ -482,7 +482,7 @@ begin
 				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
 				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_INDIRECT )
 			) THEN
-				load <= std_logic_vector(to_unsigned(40, load'length));
+				load <= std_logic_vector(to_unsigned(CONTROL_MOV_MDR_TO_DST, load'length));
 			END IF;
 
 			IF(
