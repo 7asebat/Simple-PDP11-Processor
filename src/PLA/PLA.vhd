@@ -188,13 +188,13 @@ begin
 				( signed(controlStepCounter) = 6 AND IR(n-9 DOWNTO n-11) = AUTO_DECREMENT ) OR 
 				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = INDEXED )
 			 ) THEN
-				load <= std_logic_vector(to_unsigned(38, load'length));
+				load <= std_logic_vector(to_unsigned(38, load'length)); -- BUG: should jump to MOV_MDR_TO_DST
 			END IF;
 
 			IF (
-				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = AUTO_INCREMENT ) OR
-				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = AUTO_DECREMENT ) OR
-				( signed(controlStepCounter) = 12 AND IR(n-9 DOWNTO n-11) = INDEXED ) 
+				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = AUTO_INCREMENT ) OR -- BUG: should be at 8
+				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = AUTO_DECREMENT ) OR -- BUG: should be at 8
+				( signed(controlStepCounter) = 12 AND IR(n-9 DOWNTO n-11) = INDEXED ) 				 -- BUG: should be at 11
 			) THEN
 				-- GO TO THE INSTRUCTION
 				IF IR(n-5 DOWNTO n-8) = INC_INSTRUCTION THEN
@@ -226,7 +226,7 @@ begin
 				END IF;
 			END IF;
 
-			IF  signed(controlStepCounter) > 12 THEN
+			IF  signed(controlStepCounter) > 12 THEN -- BUG: should be >= 10
 				-- Move Z to Rdst
 				IF IR(n-9 DOWNTO n-11) = REG_DIRECT THEN
 					load <= std_logic_vector(to_unsigned(CONTROL_DIRECT_REGISTER_MODE, load'length));
@@ -235,9 +235,9 @@ begin
 				END IF;
 			END IF;
 				
-			
+			-- BUG TODO: handle one op indirect modes?
 
-		ELSIF  IR(n-1 DOWNTO 14) = "11" THEN
+		ELSIF  IR(n-1 DOWNTO 14) = "11" THEN -- REVISED
 			-- branch instruction
 
 			IF (signed(controlStepCounter) = 3) THEN -- go to corresponding branch instruction
@@ -302,7 +302,7 @@ begin
 			END IF;
 
 		
-		ELSIF IR(n-1 DOWNTO 12) = "1010" THEN
+		ELSIF IR(n-1 DOWNTO 12) = "1010" THEN -- REVISED
 			-- no op instruction
 			IF IR(n-5 DOWNTO n-8) = "0000" THEN
 				-- HALT instruction
@@ -315,7 +315,7 @@ begin
 			END IF;
 
 			
-		ELSIF IR(n-1 DOWNTO 12) = "1011" THEN
+		ELSIF IR(n-1 DOWNTO 12) = "1011" THEN -- REVISED
 			-- jump instruction
 			IF IR(n-5 DOWNTO n-8) = "0000" THEN
 				-- JSR instruction
@@ -443,16 +443,15 @@ begin
 
 			-- SECOND STEP: DEST FETCHING [ Depends on src ]
 			
-			-- if SRC is reg direct and CSC is 5 go to dest fetching
 			IF  (
 				(signed(controlStepCounter) = 5 AND IR(n-5 DOWNTO n-7) = REG_DIRECT) OR
 				(signed(controlStepCounter) = 7 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT) OR
-				(signed(controlStepCounter) = 9 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT) OR
-				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT) OR
-				(signed(controlStepCounter) = 9 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT) OR
-				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT) OR
-				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = INDEXED) OR
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT)
+				(signed(controlStepCounter) = 8 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT) OR -- BUG: controlStepCounter should be 8?
+				(signed(controlStepCounter) = 9 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT) OR --BUG: controlStepCounter should be 9?
+				(signed(controlStepCounter) = 8 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT) OR -- BUG: controlStepCounter should be 8?
+				(signed(controlStepCounter) = 9 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT) OR -- BUG: controlStepCounter should be 9?
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = INDEXED) OR 
+				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT)
 			) THEN
 				
 				--DEST FETCHING
@@ -483,66 +482,77 @@ begin
 				-- DEST IS REG_INDIRECT
 				(signed(controlStepCounter) = 7 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
 				(signed(controlStepCounter) = 9 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
-				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
-				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
-				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
-				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
-				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
-				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT )
+				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
+				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
+
+				-- DEST IS AUTO_INCREMENT
+				(signed(controlStepCounter) = 8 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
+				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
+				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
+				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
+
+				-- DEST IS AUTO_DECREMENT
+				(signed(controlStepCounter) = 8 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
+				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
+				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
+				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
+
+				-- DEST IS INDEXED
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED )
 			) THEN
 				load <= std_logic_vector(to_unsigned(CONTROL_MOV_MDR_TO_DST, load'length));
 			END IF;
 
 			IF(
-				-- DEST IS AUTO_INCREMENT
-				(signed(controlStepCounter) = 8 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
-				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
-				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
-				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
-				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
-
 				-- DEST IS AUTO_INCREMENT_INDIRECT
-				(signed(controlStepCounter) = 9 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 8 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
 				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
 
-				-- DEST IS AUTO_DECREMENT
-				(signed(controlStepCounter) = 8 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
-				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
-				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
-				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
-				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
-
-				-- DEST IS AUTO_DECREMENT
-				(signed(controlStepCounter) = 9 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
+				-- DEST IS AUTO_DECREMENT_INDIRECT
+				(signed(controlStepCounter) = 8 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
 				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
 
-				-- DEST IS INDEXED
-				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
-				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
-				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
-				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED )
+				-- DEST IS INDEXED_INDIRECT
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT ) OR
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT ) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT ) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT ) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT ) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT ) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT ) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT )
+
 			) THEN
 				load <= std_logic_vector(to_unsigned(CONTROL_SOURCE_INDIRECT, load'length));
 			END IF;
@@ -553,74 +563,83 @@ begin
 				-- DEST IS REG_DIRECT
 				(signed(controlStepCounter) = 7 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT ) OR
 				(signed(controlStepCounter) = 9 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT ) OR
-				(signed(controlStepCounter) = 9 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT ) OR
-				(signed(controlStepCounter) = 9 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT ) OR
-				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_DIRECT ) OR
-				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT ) OR
-				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT ) OR
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT ) OR
+				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT ) OR
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT ) OR
+				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT ) OR
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT ) OR
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_DIRECT ) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT ) OR
 
 				-- DEST IS REG_INDIRECT
 				(signed(controlStepCounter) = 9 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
 				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
-				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
-				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
+				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
+				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT ) OR
 
 				-- DEST IS AUTO_INCREMENT
-				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
-				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
-				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
-				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
-
-				-- DEST IS AUTO_INCREMENT_INDIRECT
-				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
+				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT ) OR
 
 				-- DEST IS AUTO_DECREMENT
-				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
-				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
-				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
-				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
-
-				-- DEST IS AUTO_DECREMENT_INDIRECT
-				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
-				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
+				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT ) OR
 
 				-- DEST IS INDEXED
-				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
-				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
-				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
-				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
-				(signed(controlStepCounter) = 22 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED )
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED ) OR
 
-			) THEN
+				-- DEST IS AUTO_INCREMENT_INDIRECT
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT ) OR
+
+				-- DEST IS AUTO_DECREMENT_INDIRECT
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT ) OR
+
+				-- DEST IS INDEXED_INDIRECT
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT ) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT ) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT ) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT ) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT ) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT ) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT ) OR
+				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT )
+				) THEN
 				-- JUMP TO OPERAND INSTRUCTION
 				
 				-- CHECKING INSTRUCTION
@@ -665,147 +684,169 @@ begin
 
 			IF (
 				-- DEST IS REG_DIRECT
-				(signed(controlStepCounter) = 8 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 9 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 
 				-- DEST IS REG_INDIRECT
-				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION ) OR
-				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 
 				-- DEST IS AUTO_INCREMENT
 				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				
 
 				-- DEST IS AUTO_INCREMENT_INDIRECT
 				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 
 				-- DEST IS AUTO_DECREMENT
 				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 
 				-- DEST IS AUTO_DECREMENT_INDIRECT
 				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 
 				-- DEST IS INDEXED
 				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = INDEXED AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION ) OR
-				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 22 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION ) OR
-				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 23 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = INDEXED AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 22 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+
+				-- DEST IS INDEXED_INDIRECT
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 22 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 23 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+
 
 				-----------------------------------------------------
 				-- DEST IS REG_DIRECT
-				(signed(controlStepCounter) = 9 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 
 				-- DEST IS REG_INDIRECT
-				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION ) OR
-				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 
 				-- DEST IS AUTO_INCREMENT
 				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				
 
 				-- DEST IS AUTO_INCREMENT_INDIRECT
 				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 22 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 
 				-- DEST IS AUTO_DECREMENT
 				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 
 				-- DEST IS AUTO_DECREMENT_INDIRECT
 				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 22 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 
 				-- DEST IS INDEXED
 				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = INDEXED AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION ) OR
-				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 23 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION ) OR
-				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 24 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION)
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = INDEXED AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 22 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 23 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 
+				-- DEST IS INDEXED_INDIRECT
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 23 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 24 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION)
+				
 			) THEN
 
 				-- DEST FETCHING
@@ -817,108 +858,173 @@ begin
 				END IF;
 			END IF;
 
-
 			IF (
 				-- DEST IS REG_DIRECT
-				(signed(controlStepCounter) = 9 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 
 				-- DEST IS REG_INDIRECT
-				(signed(controlStepCounter) = 11 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION ) OR
-				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 
 				-- DEST IS AUTO_INCREMENT
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				
 
 				-- DEST IS AUTO_INCREMENT_INDIRECT
-				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 22 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 
 				-- DEST IS AUTO_DECREMENT
-				(signed(controlStepCounter) = 13 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 
 				-- DEST IS AUTO_DECREMENT_INDIRECT
-				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 22 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 
 				-- DEST IS INDEXED
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = INDEXED AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION ) OR
 				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 23 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 24 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+
+				-- DEST IS INDEXED_INDIRECT
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 22 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 22 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 24 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 25 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) = MOV_INSTRUCTION) OR
+
 
 				-----------------------------------------------------
 				-- DEST IS REG_DIRECT
-				(signed(controlStepCounter) = 10 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_DIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 
 				-- DEST IS REG_INDIRECT
-				(signed(controlStepCounter) = 12 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION ) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = REG_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 
 				-- DEST IS AUTO_INCREMENT
-				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 22 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				
 
 				-- DEST IS AUTO_INCREMENT_INDIRECT
-				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 22 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 23 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 
 				-- DEST IS AUTO_DECREMENT
-				(signed(controlStepCounter) = 14 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 22 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 
 				-- DEST IS AUTO_DECREMENT_INDIRECT
-				(signed(controlStepCounter) = 15 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 16 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 22 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 23 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 
 				-- DEST IS INDEXED
-				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = INDEXED AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 22 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION ) OR
 				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
-				(signed(controlStepCounter) = 24 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION)
+				(signed(controlStepCounter) = 22 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 24 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 25 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
 
+				-- DEST IS INDEXED_INDIRECT
+				(signed(controlStepCounter) = 19 AND IR(n-5 DOWNTO n-7) = REG_DIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = REG_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 22 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 23 AND IR(n-5 DOWNTO n-7) = AUTO_INCREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION ) OR
+				(signed(controlStepCounter) = 22 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 23 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 25 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION) OR
+				(signed(controlStepCounter) = 26 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION)
+				
 			) THEN
+
 				load <= (OTHERS => '0');
 			END IF;
 
