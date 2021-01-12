@@ -14,12 +14,11 @@ end entity PLA;
 architecture default of PLA is
 	signal partAOutput, partBOutput, partCOutput, partDOutput : std_logic_vector(n-1 downto 0);
 	signal partACarry, partCCarry, partDCarry : std_logic;	
-	signal status_N, status_Z, status_V, status_C : std_logic;
+	signal status_N, status_Z, status_C : std_logic;
 begin
 	status_N <= statusRegister(0);
-	status_Z <= statusRegister(1);
-	status_V <= statusRegister(2);
-	status_C <= statusRegister(3);
+	status_C <= statusRegister(1);
+	status_Z <= statusRegister(2);
 
 	PROCESS (IR, controlStepCounter)
 		-- DOUBLE OPERANDS
