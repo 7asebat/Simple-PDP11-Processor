@@ -159,19 +159,23 @@ begin
 			END IF;
 			
 			IF (
-				( signed(controlStepCounter) = 6 AND IR(n-9 DOWNTO n-11) = AUTO_INCREMENT_INDIRECT ) OR
-				( signed(controlStepCounter) = 6 AND IR(n-9 DOWNTO n-11) = AUTO_DECREMENT_INDIRECT ) OR 
-				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = INDEXED_INDIRECT )
+				( signed(controlStepCounter) = 7 AND IR(n-9 DOWNTO n-11) = AUTO_INCREMENT_INDIRECT ) OR
+				( signed(controlStepCounter) = 7 AND IR(n-9 DOWNTO n-11) = AUTO_DECREMENT_INDIRECT ) OR 
+				( signed(controlStepCounter) = 10 AND IR(n-9 DOWNTO n-11) = INDEXED_INDIRECT )
 			 ) THEN
 				load <= std_logic_vector(to_unsigned(CONTROL_DESTINATION_INDIRECT, load'length));
 			END IF;
 
 			-- GO TO INSTRUCTION
 			IF (
-				( signed(controlStepCounter) = 5 AND IR(n-9 DOWNTO n-11) = DIRECT) OR
-				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = AUTO_INCREMENT ) OR
-				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = AUTO_DECREMENT ) OR
-				( signed(controlStepCounter) = 12 AND IR(n-9 DOWNTO n-11) = INDEXED ) 
+				( signed(controlStepCounter) = 5 AND IR(n-9 DOWNTO n-11) = REG_DIRECT ) OR
+				( signed(controlStepCounter) = 7 AND IR(n-9 DOWNTO n-11) = REG_INDIRECT ) OR
+				( signed(controlStepCounter) = 8 AND IR(n-9 DOWNTO n-11) = AUTO_INCREMENT ) OR
+				( signed(controlStepCounter) = 8 AND IR(n-9 DOWNTO n-11) = AUTO_DECREMENT ) OR 
+				( signed(controlStepCounter) = 11 AND IR(n-9 DOWNTO n-11) = INDEXED ) OR
+				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = AUTO_INCREMENT_INDIRECT ) OR
+				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = AUTO_DECREMENT_INDIRECT ) OR 
+				( signed(controlStepCounter) = 12 AND IR(n-9 DOWNTO n-11) = INDEXED_INDIRECT )
 			) THEN
 				-- GO TO THE INSTRUCTION
 				IF IR(n-5 DOWNTO n-8) = INC_INSTRUCTION THEN
@@ -203,7 +207,16 @@ begin
 				END IF;
 			END IF;
 
-			IF  signed(controlStepCounter) > 12 THEN -- BUG: should be >= 10
+			IF  (
+				( signed(controlStepCounter) = 7 AND IR(n-9 DOWNTO n-11) = REG_DIRECT ) OR
+				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = REG_INDIRECT ) OR
+				( signed(controlStepCounter) = 10 AND IR(n-9 DOWNTO n-11) = AUTO_INCREMENT ) OR
+				( signed(controlStepCounter) = 10 AND IR(n-9 DOWNTO n-11) = AUTO_DECREMENT ) OR 
+				( signed(controlStepCounter) = 13 AND IR(n-9 DOWNTO n-11) = INDEXED ) OR
+				( signed(controlStepCounter) = 11 AND IR(n-9 DOWNTO n-11) = AUTO_INCREMENT_INDIRECT ) OR
+				( signed(controlStepCounter) = 11 AND IR(n-9 DOWNTO n-11) = AUTO_DECREMENT_INDIRECT ) OR 
+				( signed(controlStepCounter) = 14 AND IR(n-9 DOWNTO n-11) = INDEXED_INDIRECT )
+			) THEN -- BUG: should be >= 10
 				-- Move Z to Rdst
 				IF IR(n-9 DOWNTO n-11) = REG_DIRECT THEN
 					load <= std_logic_vector(to_unsigned(CONTROL_DIRECT_REGISTER_MODE, load'length));
@@ -211,9 +224,22 @@ begin
 					load <= std_logic_vector(to_unsigned(CONTROL_INDIRECT_WRITE_MODE, load'length));
 				END IF;
 			END IF;
-				
-			-- BUG TODO: handle one op indirect modes?
 
+			IF  (
+				( signed(controlStepCounter) = 9 AND IR(n-9 DOWNTO n-11) = REG_DIRECT ) OR
+				( signed(controlStepCounter) = 11 AND IR(n-9 DOWNTO n-11) = REG_INDIRECT ) OR
+				( signed(controlStepCounter) = 12 AND IR(n-9 DOWNTO n-11) = AUTO_INCREMENT ) OR
+				( signed(controlStepCounter) = 12 AND IR(n-9 DOWNTO n-11) = AUTO_DECREMENT ) OR 
+				( signed(controlStepCounter) = 15 AND IR(n-9 DOWNTO n-11) = INDEXED ) OR
+				( signed(controlStepCounter) = 13 AND IR(n-9 DOWNTO n-11) = AUTO_INCREMENT_INDIRECT ) OR
+				( signed(controlStepCounter) = 13 AND IR(n-9 DOWNTO n-11) = AUTO_DECREMENT_INDIRECT ) OR 
+				( signed(controlStepCounter) = 16 AND IR(n-9 DOWNTO n-11) = INDEXED_INDIRECT )
+			) THEN
+				-- GO TO END	
+				load <= (OTHERS => '0');
+
+			END IF;
+				
 		ELSIF  IR(n-1 DOWNTO 14) = "11" THEN -- REVISED
 			-- branch instruction
 
