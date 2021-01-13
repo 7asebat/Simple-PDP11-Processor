@@ -145,20 +145,36 @@ SIGNAL uIR_sig: std_logic_vector(CTRL_WORD_SIZE-1 DOWNTO 0);
 -- CONTROL SIGNALS
 SIGNAL CTRL_SIGNALS: std_logic_vector(CTRL_SIGNALS_SIZE-1 DOWNTO 0);
 
+-- MIU
+SIGNAL MIU_reset: std_logic;
+SIGNAL MIU_read: std_logic;
+SIGNAL MIU_write: std_logic;
+SIGNAL MIU_mfc: std_logic;
+SIGNAL MIU_wmfc: std_logic;
+SIGNAL MIU_mem_read: std_logic;
+SIGNAL MIU_mem_write: std_logic;
+SIGNAL MIU_run: std_logic;
+
 -- WMFC
 SIGNAL WMFC: std_logic;
 
+-- RUN
+SIGNAL RUN: std_logic;
+
 -- CLK
 SIGNAL clk : std_logic;
+SIGNAL inv_clk: std_logic;
 
 -- BUS
 SIGNAL shared_bus : std_logic_vector(BUS_SIZE-1 DOWNTO 0);
 
 -- GLOBAL RESET
 SIGNAL reset_all: std_logic;
--- TODO: wassal le reset_all
+-- TODO: wassal el reset_all
 
 BEGIN
+
+inv_clk <= not(clk);
 
 -- REGISTERS
 
@@ -211,12 +227,13 @@ ALU: ENTITY work.ALU(main) GENERIC MAP(ALU_SIZE) PORT MAP(Ry_out, shared_bus, AL
 
 -- RAM MEMORY
 
-RAM: ENTITY work.nmRam(main) GENERIC MAP(RAM_SIZE, RAM_WIDTH) PORT MAP(clk, RAM_write, MAR_out, MDR_out, MDR_ram_in, RAM_MFC);
+RAM: ENTITY work.nmRam(main) GENERIC MAP(RAM_SIZE, RAM_WIDTH) PORT MAP(inv_clk, RAM_write, MAR_out, MDR_out, MDR_ram_in, RAM_MFC);
 
 -- MEMORY REGISTERS
 -- DONE: need to handle MDR in signal
 MDR_REGISTER: ENTITY work.n2DFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, MDR_reset, MDR_bus_en, MDR_bus_in, MDR_ram_en, MDR_ram_in, MDR_out);
 MDR_ram_en <= RAM_read; -- BUG: should be connected with MFC instead?
+
 Tri_MDR: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_MDR_en, MDR_out, Tri_MDR_out);
 shared_bus <= Tri_MDR_out;
 
@@ -237,8 +254,13 @@ PLA: ENTITY work.PLA(main) GENERIC MAP(REG_SIZE, COUNTER_SIZE) PORT MAP(IR_out, 
 uPC: ENTITY work.nCounter(main) GENERIC MAP(COUNTER_SIZE) PORT MAP(clk, uPC_en, uPC_mode, uPC_reset, uPC_load, uPC_in, uPC_out);
 
 uPC_mode <= '0';
--- TODO: add RUN signal condition here
-uPC_en <= (not (HALT_out(0)));
+-- DONE: add RUN signal condition here
+uPC_en <= (RUN AND (not (HALT_out(0))));
+
+-- MIU
+MIU: ENTITY work.MIU(main) PORT MAP(clk, MIU_reset, MIU_read, MIU_write, MIU_mfc, MIU_wmfc, MIU_mem_read, MIU_mem_write, MIU_run);
+MIU_wmfc <= WMFC;
+RUN <= MIU_run;
 
 -- HALT
 HALT_REG: ENTITY work.nDFF(main) GENERIC MAP(1) PORT MAP(clk, HALT_en, HALT_reset, HALT_in, HALT_out);
@@ -292,7 +314,7 @@ Tri_Rx_en(6) <= (CTRL_SIGNALS(48) OR CTRL_SIGNALS(56) OR CTRL_SIGNALS(40));
 Tri_Rx_en(7) <= (CTRL_SIGNALS(49) OR CTRL_SIGNALS(57) OR CTRL_SIGNALS(58));
 
 Tri_MDR_en <= CTRL_SIGNALS(59);
-Rz_en <= CTRL_SIGNALS(60);
+Tri_Rz_en <= CTRL_SIGNALS(60);
 
 
 

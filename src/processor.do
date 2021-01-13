@@ -127,4 +127,4 @@ noforce sim:/processor/INT_SRC_reset
 noforce sim:/processor/INT_DST_reset
 noforce sim:/processor/HALT_reset
 noforce sim:/processor/CTRL_COUNTER_reset
-force -freeze sim:/processor/clk 1 0, 0 {50 ps} -r 100
+force -freeze sim:/processor/clk 0 0, 1 {50 ps} -r 100
