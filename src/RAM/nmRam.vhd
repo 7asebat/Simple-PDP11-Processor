@@ -9,12 +9,12 @@ ENTITY nmRam IS
     m: INTEGER := 32
   );
 	PORT(
-    MFC: OUT std_logic;
     clk: IN std_logic;
     wr: IN std_logic;
     address: IN std_logic_vector(integer(ceil(log2(real(n))))-1 DOWNTO 0);
     dataIn: IN std_logic_vector(m-1 DOWNTO 0);
-    dataOut: OUT std_logic_vector(m-1 DOWNTO 0)
+    dataOut: OUT std_logic_vector(m-1 DOWNTO 0);
+    MFC: OUT std_logic
   ); 
 END ENTITY;
 
