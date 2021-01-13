@@ -15,7 +15,7 @@ entity MIU is
        run:       out std_logic);
 end MIU;
 
-architecture MIU_arch of MIU is
+architecture main of MIU is
   component JKFF is
     port(clock: in  std_logic;
          reset: in  std_logic;
@@ -41,7 +41,7 @@ begin
 
   read_JKFF: JKFF port map(clock, reset, rd, mfc, s_mem_read);
   write_JKFF: JKFF port map(clock, reset, wr, mfc, s_mem_write);
-end MIU_arch; -- MIU_arch
+end main; -- MIU_arch
 
 -- ===================================================================
 library IEEE;
@@ -52,7 +52,7 @@ use work.utility_pack.all;
 entity MIU_tb is
 end MIU_tb;
 
-architecture MIU_tb_arch of MIU_tb is
+architecture main of MIU_tb is
   component MIU is
   port(clock:     in  std_logic;
        reset:     in  std_logic;
@@ -118,4 +118,4 @@ begin
   end process;
   tb: MIU port map(t_clock, t_reset, t_rd, t_wr, t_mfc, t_wmfc, t_mem_read, t_mem_write, t_run);
 
-  end MIU_tb_arch;
+  end main;

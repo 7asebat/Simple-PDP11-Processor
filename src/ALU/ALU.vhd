@@ -209,19 +209,17 @@ begin
 
 			wait for 50 ns;
       assert(t_flag & t_f = test_output(i))
-			report ""
-				& "received (" 
-				& to_string(t_flag) 
-				& ", " & to_hstring(t_F)
-				& "), expected (" 
-				& to_string(test_output(i)(18 downto 16)) 
-				& ", " & to_hstring(test_output(i)(15 downto 0))
-				& ") for (" 
-				& to_hstring(test_input(i)(0 to 3))
-				& ", " & to_hstring(test_input(i)(4 to 19))
-				& ", " & to_hstring(test_input(i)(20 to 35))
-				& ", " & to_hstring(test_input(i)(36 to 39))
-				& ")"
+			report "received (" 
+				& to_string(t_flag) & ", " 
+				& to_hstring(t_F) & "), " 
+				& "expected (" 
+				& to_string(test_output(i)(18 downto 16)) & ", " 
+				& to_hstring(test_output(i)(15 downto 0)) & ") " 
+				& "for (" 
+				& to_hstring(test_input(i)(0 to 3)) & ", " 
+				& to_hstring(test_input(i)(4 to 19)) & ", " 
+				& to_hstring(test_input(i)(20 to 35)) & ", " 
+				& to_hstring(test_input(i)(36 to 39)) & ")";
       severity ERROR;
 
 		end loop;

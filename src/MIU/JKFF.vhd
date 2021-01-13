@@ -46,7 +46,7 @@ use work.utility_pack.all;
 entity JKFF_tb is
 end JKFF_tb;
 
-architecture JKFF_tb_arch of JKFF_tb is
+architecture main of JKFF_tb is
   component JKFF is
   port(clock: in  std_logic;
        reset: in  std_logic;
@@ -91,4 +91,4 @@ begin
   end process;
   tb: JKFF port map(t_clock, t_reset, t_J, t_K, t_Q);
 
-end JKFF_tb_arch;
+end main;
