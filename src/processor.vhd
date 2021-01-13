@@ -20,6 +20,8 @@ CONSTANT COUNTER_SIZE: INTEGER := 8;
 CONSTANT PLA_LOAD_SIZE: INTEGER := 16;
 CONSTANT CTRL_WORD_SIZE: INTEGER := 21;
 CONSTANT CTRL_SIGNALS_SIZE: INTEGER := 61;
+CONSTANT RAM_SIZE: INTEGER := 128;
+CONSTANT RAM_WIDTH: INTEGER := 16;
 
 -- GENERAL PURPOSE REGISTERS
 
@@ -54,9 +56,11 @@ SIGNAL Tri_INT_DST_en: std_logic;
 SIGNAL Tri_INT_DST_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
 
 -- STATUS REGISTER
-SIGNAL Rstatus_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL Rstatus_bus_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL Rstatus_alu_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
 SIGNAL Rstatus_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL Rstatus_en: std_logic;
+SIGNAL Rstatus_bus_en: std_logic;
+SIGNAL Rstatus_alu_en: std_logic;
 SIGNAL Rstatus_reset: std_logic;
 
 SIGNAL Tri_Rstatus_en: std_logic;
@@ -91,9 +95,11 @@ SIGNAL ALU_Cin: std_logic;
 SIGNAL ALU_flags: std_logic_vector(FLAGS_COUNT-1 DOWNTO 0);
 
 -- MEMORY REGISTERS
-SIGNAL MDR_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL MDR_bus_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL MDR_ram_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
 SIGNAL MDR_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL MDR_en: std_logic;
+SIGNAL MDR_bus_en: std_logic;
+SIGNAL MDR_ram_en: std_logic;
 SIGNAL MDR_reset: std_logic;
 
 SIGNAL Tri_MDR_en: std_logic;
@@ -127,6 +133,11 @@ SIGNAL HALT_in: std_logic;
 SIGNAL HALT_out: std_logic;
 SIGNAL HALT_en: std_logic;
 SIGNAL HALT_reset: std_logic;
+
+-- RAM
+SIGNAL RAM_read: std_logic;
+SIGNAL RAM_write: std_logic;
+SIGNAL RAM_MFC: std_logic;
 
 -- uIR
 SIGNAL uIR_sig: std_logic_vector(CTRL_WORD_SIZE-1 DOWNTO 0);
@@ -163,8 +174,10 @@ INTERMEDIATE_DST: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, INT
 Tri_INTERMEDIATE_DST: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_INT_DST_en, INT_DST_out, shared_bus);
 
 -- STATUS
--- TODO: need to handle status in signal
-STATUS_REGISTER: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, Rstatus_en, Rstatus_reset, Rstatus_in, Rstatus_out); 
+-- DONE: need to handle status in signal
+STATUS_REGISTER: ENTITY work.n2DFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, Rstatus_reset, Rstatus_bus_en, Rstatus_bus_in, Rstatus_alu_en, Rstatus_alu_in, Rstatus_out);
+Rstatus_alu_en <= not(ALU_F(3) AND ALU_F(2) AND ALU_F(1) AND ALU_F(0)); -- Rstatus_alu_en =  ALU_F!=1111
+Rstatus_alu_in <= ("0000000000000" & ALU_flags);
 Tri_Rstatus: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_Rstatus_en, Rstatus_out, shared_bus);
 
 -- IR
@@ -180,9 +193,16 @@ Tri_Rz: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_IN
 -- ALU
 ALU: ENTITY work.ALU(main) GENERIC MAP(ALU_SIZE) PORT MAP(Ry_out, shared_bus, ALU_F, ALU_Cin, Rz_in, ALU_flags);
 
+-- RAM MEMORY
+
+RAM: ENTITY work.nmRam(main) GENERIC MAP(RAM_SIZE, RAM_WIDTH) PORT MAP(clk, RAM_write, MAR_out, MDR_out, MDR_ram_in, RAM_MFC);
+
 -- MEMORY REGISTERS
--- TODO: need to handle MDR in signal
-MDR_REGISTER: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, MDR_en, MDR_reset, shared_bus, MDR_out);
+-- DONE: need to handle MDR in signal
+MDR_REGISTER: ENTITY work.n2DFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, MDR_reset, MDR_bus_en, MDR_bus_in, MDR_ram_en, MDR_ram_in, MDR_out);
+MDR_ram_en <= RAM_read; -- BUG: should be connected with MFC instead?
+
+
 Tri_MDR: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_MDR_en, MDR_out, shared_bus);
 
 MAR_REGISTER: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, MAR_en, MAR_reset, shared_bus, MAR_out);
@@ -214,18 +234,20 @@ ROM: ENTITY work.nmROM(main) PORT MAP(uPC_out, uIR_sig);
 -- CONTROL_WORD_DECODER
 CTRL_WORD_DECODER: ENTITY work.controlWordDecoder(main) PORT MAP(uIR_sig, IR_out, CTRL_SIGNALS);
 
--- TODO: Add Read and Write signals to RAM from CTRL_SIGNALS
+-- DONE: Add Read and Write signals to RAM from CTRL_SIGNALS
 uPC_load <= CTRL_SIGNALS(0);
 WMFC <= CTRL_SIGNALS(1);
 ALU_Cin <= CTRL_SIGNALS(2);
 Ry_reset <= CTRL_SIGNALS(3);
+RAM_read <= CTRL_SIGNALS(4);
+RAM_write <= CTRL_SIGNALS(5);
 ALU_F <= CTRL_SIGNALS(9 DOWNTO 6);
 INT_DST_en <= CTRL_SIGNALS(10);
 INT_SRC_en <= CTRL_SIGNALS(11);
 Ry_en <= CTRL_SIGNALS(12);
-MDR_en <= CTRL_SIGNALS(13); -- BUG: make sure to edit this when MDR multiple inputs are handled
+MDR_bus_en <= CTRL_SIGNALS(13); -- DONE: make sure to edit this when MDR multiple inputs are handled
 MAR_en <= CTRL_SIGNALS(14);
-Rstatus_en <= CTRL_SIGNALS(15); -- BUG: make sure to edit this when status multiple inputs are handled
+Rstatus_bus_en <= CTRL_SIGNALS(15); -- DOBE: make sure to edit this when status multiple inputs are handled
 
 Rx_en(0) <= (CTRL_SIGNALS(17) OR CTRL_SIGNALS(25));
 Rx_en(1) <= (CTRL_SIGNALS(18) OR CTRL_SIGNALS(26));

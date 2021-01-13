@@ -8,11 +8,11 @@ entity n2DFF is
 
        A_en:  in  std_logic;
        A_in:  in  std_logic_vector(SIZE-1 downto 0);
-       A_out: out std_logic_vector(SIZE-1 downto 0);
 
        B_en:  in  std_logic;
        B_in:  in  std_logic_vector(SIZE-1 downto 0);
-       B_out: out std_logic_vector(SIZE-1 downto 0));
+
+       reg_out: out std_logic_vector(SIZE-1 downto 0));
 end entity;
 
 architecture main of n2DFF is
@@ -20,8 +20,7 @@ architecture main of n2DFF is
   signal s_Q: std_logic_vector(15 downto 0);
   signal s_en: std_logic;
 begin
-  A_out <= s_Q;
-  B_out <= s_Q;
+  reg_out <= s_Q;
 
   -- Select input source based on enable
   s_D <= A_in when A_en = '1' 
@@ -50,11 +49,11 @@ architecture main of n2DFF_tb is
 
   signal t_busEnable: std_logic;
   signal t_busIn:     std_logic_vector(15 downto 0);
-  signal t_busOut:    std_logic_vector(15 downto 0);
 
   signal t_ramEnable: std_logic;
   signal t_ramIn:     std_logic_vector(15 downto 0);
-  signal t_ramOut:    std_logic_vector(15 downto 0); 
+
+  signal t_out:    std_logic_vector(15 downto 0); 
 
   type TestInput is array (0 to 3) of std_logic_vector(0 to 40);
   -- Reset __ BUS __ RAM
@@ -82,9 +81,9 @@ begin
       t_clock <= '1';
       wait for 50 ns;
     
-      assert((t_busOut = t_ramOut) and (t_busOut = output_cases(i)))
+      assert((t_out = output_cases(i)))
       report "received (" 
-        & to_hstring(t_busOut) & "), "
+        & to_hstring(t_out) & "), "
         & "expected (" 
         & to_hstring(output_cases(i)) & ") "
         & "for (" 
@@ -100,6 +99,6 @@ begin
   tb: entity work.n2DFF(main) 
     generic map(16)
     port map(t_clock, t_reset, 
-             t_busEnable, t_busIn, t_busOut,
-             t_ramEnable, t_ramIn, t_ramOut);
+             t_busEnable, t_busIn,
+             t_ramEnable, t_ramIn, t_out);
 end main;
