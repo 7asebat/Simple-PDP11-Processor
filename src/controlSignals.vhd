@@ -74,7 +74,7 @@ begin
                         port map(
                             A => IR(8 downto 6),
                             F => R_SRCout_decoder_out,
-                            EN => F1_decoded(4) --(R_src)out
+                            EN => F1_decoded(3) --(R_src)out
                         );
 
     R_DSTout_decoder:   entity work.decoder(decoder_arch)
@@ -82,7 +82,7 @@ begin
                         port map(
                             A => IR(2 downto 0),
                             F => R_DSTout_decoder_out,
-                            EN => F1_decoded(5) --(R_dst)out
+                            EN => F1_decoded(4) --(R_dst)out
                         );    
     
     --Decoding F2 signals

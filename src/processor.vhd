@@ -137,7 +137,6 @@ SIGNAL HALT_reset: std_logic;
 -- RAM
 SIGNAL RAM_read: std_logic;
 SIGNAL RAM_write: std_logic;
-SIGNAL RAM_MFC: std_logic;
 
 -- uIR
 SIGNAL uIR_sig: std_logic_vector(CTRL_WORD_SIZE-1 DOWNTO 0);
@@ -160,6 +159,9 @@ SIGNAL WMFC: std_logic;
 
 -- RUN
 SIGNAL RUN: std_logic;
+
+-- MFC
+SIGNAL MFC: std_logic;
 
 -- CLK
 SIGNAL clk : std_logic;
@@ -227,12 +229,12 @@ ALU: ENTITY work.ALU(main) GENERIC MAP(ALU_SIZE) PORT MAP(Ry_out, shared_bus, AL
 
 -- RAM MEMORY
 
-RAM: ENTITY work.nmRam(main) GENERIC MAP(RAM_SIZE, RAM_WIDTH) PORT MAP(inv_clk, RAM_write, MAR_out, MDR_out, MDR_ram_in, RAM_MFC);
+RAM: ENTITY work.nmRam(main) GENERIC MAP(RAM_SIZE, RAM_WIDTH) PORT MAP(inv_clk, MIU_mfc, MIU_mem_read, MIU_mem_write, MAR_out, MDR_out, MDR_ram_in);
 
 -- MEMORY REGISTERS
 -- DONE: need to handle MDR in signal
 MDR_REGISTER: ENTITY work.n2DFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, MDR_reset, MDR_bus_en, MDR_bus_in, MDR_ram_en, MDR_ram_in, MDR_out);
-MDR_ram_en <= RAM_read; -- BUG: should be connected with MFC instead?
+MDR_ram_en <= MFC; -- DONE: should be connected with MFC instead?
 
 Tri_MDR: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_MDR_en, MDR_out, Tri_MDR_out);
 shared_bus <= Tri_MDR_out;
@@ -245,7 +247,7 @@ MAR_in <= shared_bus;
 -- CONTROL STEP COUNTER
 CONTROL_STEP_COUNTER: ENTITY work.nCounter(main) GENERIC MAP(COUNTER_SIZE) PORT MAP(clk, CTRL_COUNTER_en, CTRL_COUNTER_mode, CTRL_COUNTER_reset, CTRL_COUNTER_load, CTRL_COUNTER_in, CTRL_COUNTER_out);
 CTRL_COUNTER_mode <= '0';
-CTRL_COUNTER_en <= '1';
+CTRL_COUNTER_en <= (RUN AND (not (HALT_out(0))));
 
 -- PLA
 PLA: ENTITY work.PLA(main) GENERIC MAP(REG_SIZE, COUNTER_SIZE) PORT MAP(IR_out, CTRL_COUNTER_out, Rstatus_out, uPC_in, HALT_en);
@@ -261,6 +263,9 @@ uPC_en <= (RUN AND (not (HALT_out(0))));
 MIU: ENTITY work.MIU(main) PORT MAP(clk, MIU_reset, MIU_read, MIU_write, MIU_mfc, MIU_wmfc, MIU_mem_read, MIU_mem_write, MIU_run);
 MIU_wmfc <= WMFC;
 RUN <= MIU_run;
+MFC <= MIU_mfc;
+MIU_read <= RAM_read;
+MIU_write <= RAM_write;
 
 -- HALT
 HALT_REG: ENTITY work.nDFF(main) GENERIC MAP(1) PORT MAP(clk, HALT_en, HALT_reset, HALT_in, HALT_out);

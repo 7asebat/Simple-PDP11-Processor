@@ -23,7 +23,7 @@ vsim work.processor
 # Loading work.nmrom(main)
 # Loading work.controlworddecoder(main)
 # Loading work.decoder(decoder_arch)
-add wave -position insertpoint  \
+add wave -hex -position insertpoint  \
 sim:/processor/WMFC \
 sim:/processor/uPC_reset \
 sim:/processor/uPC_out \
@@ -38,6 +38,7 @@ sim:/processor/Tri_Rx_out \
 sim:/processor/Tri_Rx_en \
 sim:/processor/Tri_Rstatus_out \
 sim:/processor/Tri_Rstatus_en \
+sim:/processor/Tri_MDR_out \
 sim:/processor/Tri_MDR_en \
 sim:/processor/Tri_INT_SRC_out \
 sim:/processor/Tri_INT_SRC_en \
@@ -56,15 +57,25 @@ sim:/processor/Rx_reset \
 sim:/processor/Rx_out \
 sim:/processor/Rx_in \
 sim:/processor/Rx_en \
+sim:/processor/RUN \
 sim:/processor/Rstatus_reset \
 sim:/processor/Rstatus_out \
 sim:/processor/Rstatus_bus_in \
 sim:/processor/Rstatus_bus_en \
 sim:/processor/Rstatus_alu_in \
 sim:/processor/Rstatus_alu_en \
+sim:/processor/reset_all \
 sim:/processor/RAM_write \
 sim:/processor/RAM_read \
-sim:/processor/RAM_MFC \
+sim:/processor/MIU_write \
+sim:/processor/MIU_wmfc \
+sim:/processor/MIU_run \
+sim:/processor/MIU_reset \
+sim:/processor/MIU_read \
+sim:/processor/MIU_mfc \
+sim:/processor/MIU_mem_write \
+sim:/processor/MIU_mem_read \
+sim:/processor/MFC \
 sim:/processor/MDR_reset \
 sim:/processor/MDR_ram_in \
 sim:/processor/MDR_ram_en \
@@ -79,6 +90,7 @@ sim:/processor/IR_reset \
 sim:/processor/IR_out \
 sim:/processor/IR_in \
 sim:/processor/IR_en \
+sim:/processor/inv_clk \
 sim:/processor/INT_SRC_reset \
 sim:/processor/INT_SRC_out \
 sim:/processor/INT_SRC_in \
@@ -102,7 +114,9 @@ sim:/processor/clk \
 sim:/processor/ALU_flags \
 sim:/processor/ALU_F \
 sim:/processor/ALU_Cin
+
 force -freeze sim:/processor/uPC_reset 1 0
+force -freeze sim:/processor/MIU_reset 1 0
 force -freeze sim:/processor/Rz_reset 1 0
 force -freeze sim:/processor/Ry_reset 1 0
 force -freeze sim:/processor/Rstatus_reset 1 0
@@ -115,6 +129,7 @@ force -freeze sim:/processor/HALT_reset 1 0
 force -freeze sim:/processor/CTRL_COUNTER_reset 1 0
 force -freeze sim:/processor/Rx_reset 11111111 0
 run
+noforce sim:/processor/MIU_reset
 noforce sim:/processor/uPC_reset
 noforce sim:/processor/Rz_reset
 noforce sim:/processor/Ry_reset
