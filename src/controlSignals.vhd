@@ -10,7 +10,7 @@ entity controlWordDecoder is
     );
 end controlWordDecoder;
 
-architecture controlWordDecoder_arch of controlWordDecoder is
+architecture main of controlWordDecoder is
     signal F1,F5: std_logic_vector(3 downto 0);
     signal F2: std_logic_vector(2 downto 0);
     signal F3,F4,F6: std_logic_vector(1 downto 0);
@@ -186,4 +186,4 @@ begin
     controlSignals(57 downto 50) <= R_SRCout_decoder_out;
     controlSignals(60 downto 58) <= F1_decoded(2 downto 0);
 
-end controlWordDecoder_arch;
+end architecture;

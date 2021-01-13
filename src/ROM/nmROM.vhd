@@ -5,13 +5,13 @@ use IEEE.math_real.all;
 
 ENTITY nmROM IS 
 	PORT(
-    address: IN std_logic_vector(integer(ceil(log2(real(n))))-1 DOWNTO 0);
-    dataOut: OUT std_logic_vector(m-1 DOWNTO 0)
+    address: IN std_logic_vector(integer(ceil(log2(real(256))))-1 DOWNTO 0);
+    dataOut: OUT std_logic_vector(21-1 DOWNTO 0)
   ); 
 END ENTITY;
 
-ARCHITECTURE main OF nmRam IS
-  CONSTANT n: integer := 128; -- ROM size
+ARCHITECTURE main OF nmRom IS
+  CONSTANT n: integer := 256; -- ROM size
   CONSTANT m: integer := 21; -- Control Signal Width
   TYPE rom_type IS ARRAY(0 TO n-1) of std_logic_vector(m-1 DOWNTO 0);
   SIGNAL rom: rom_type := (
@@ -136,6 +136,7 @@ ARCHITECTURE main OF nmRam IS
     118 => "000000000000000000001",
     119 => "001100010000000100010",
     120 => "000000000000000000001",
+    OTHERS => ("000000000000000000000")
   );
 BEGIN
   dataOut <= rom(to_integer(unsigned(address)));

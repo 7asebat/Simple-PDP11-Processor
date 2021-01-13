@@ -3,15 +3,15 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity PLA is
-	generic(n: integer := 16);
+	generic(n: integer := 16; m: integer:= 8);
 	port(
 	IR, controlStepCounter, statusRegister : in std_logic_vector(n-1 downto 0);
-	load : out std_logic_vector(n-1 downto 0);
+	load : out std_logic_vector(m-1 downto 0);
 	halt: out std_logic
 	);
 end entity PLA;
 
-architecture default of PLA is
+architecture main of PLA is
 	signal partAOutput, partBOutput, partCOutput, partDOutput : std_logic_vector(n-1 downto 0);
 	signal partACarry, partCCarry, partDCarry : std_logic;	
 	signal status_N, status_Z, status_C : std_logic;
