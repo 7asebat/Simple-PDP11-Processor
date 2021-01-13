@@ -5,7 +5,7 @@ use IEEE.math_real.all;
 
 ENTITY nmROM IS 
 	PORT(
-    address: IN std_logic_vector(integer(ceil(log2(real(256))))-1 DOWNTO 0);
+    address: IN std_logic_vector(integer(ceil(log2(real(65536))))-1 DOWNTO 0);
     dataOut: OUT std_logic_vector(21-1 DOWNTO 0)
   ); 
 END ENTITY;

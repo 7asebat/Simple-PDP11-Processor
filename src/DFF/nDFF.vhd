@@ -15,7 +15,7 @@ BEGIN
 
 PROCESS(clk, R)
 BEGIN
-	IF (R = '1' AND en = '1') THEN
+	IF (R = '1') THEN
 		Q <= (OTHERS => '0');
 	ELSIF (rising_edge(clk) AND en = '1') THEN
 		Q <= D;

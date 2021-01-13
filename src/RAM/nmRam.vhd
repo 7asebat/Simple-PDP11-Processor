@@ -22,10 +22,14 @@ ARCHITECTURE main OF nmRam IS
   TYPE ram_type IS ARRAY(0 TO n-1) of std_logic_vector(m-1 DOWNTO 0);
   SIGNAL ram: ram_type := (
     -- initialize here 
-    10 => (m-1 DOWNTO 8 => '0') & X"0A",
-    9 => (m-1 DOWNTO 8 => '0') & X"09",
-    8 => (m-1 DOWNTO 8 => '0') & X"08",
-    7 => (m-1 DOWNTO 8 => '0') & X"07",
+    0 => ("0000110111000000"),
+    1 => ("0000000000000100"),
+    2 => ("0000110111000001"),
+    3 => ("0000000000000011"),
+    4 => ("0001000000000001"),
+    5 => ("1010000000000000"),
+    6 => ("0000000000000111"),
+    7 => ("0000000000000101"),
     OTHERS => ((m-1 DOWNTO 8 => '0') & X"00")
   );
 BEGIN

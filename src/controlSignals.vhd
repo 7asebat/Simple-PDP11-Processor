@@ -72,7 +72,7 @@ begin
     R_SRCout_decoder:   entity work.decoder(decoder_arch)
                         generic map(3)
                         port map(
-                            A => IR(11 downto 6),
+                            A => IR(8 downto 6),
                             F => R_SRCout_decoder_out,
                             EN => F1_decoded(4) --(R_src)out
                         );
@@ -80,7 +80,7 @@ begin
     R_DSTout_decoder:   entity work.decoder(decoder_arch)
                         generic map(3)
                         port map(
-                            A => IR(5 downto 0),
+                            A => IR(2 downto 0),
                             F => R_DSTout_decoder_out,
                             EN => F1_decoded(5) --(R_dst)out
                         );    
@@ -101,7 +101,7 @@ begin
     R_SRCin_decoder:    entity work.decoder(decoder_arch)
                         generic map(3)
                         port map(
-                            A => IR(11 downto 6),
+                            A => IR(8 downto 6),
                             F => R_SRCin_decoder_out,
                             EN => F2_decoded(3) --(R_src)in
                         );
@@ -109,7 +109,7 @@ begin
     R_DSTin_decoder:    entity work.decoder(decoder_arch)
                         generic map(3)
                         port map(
-                            A => IR(5 downto 0),
+                            A => IR(2 downto 0),
                             F => R_DSTin_decoder_out,
                             EN => F2_decoded(4) --(R_dst)in
                         );

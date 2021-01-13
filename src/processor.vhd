@@ -16,11 +16,11 @@ CONSTANT REG_COUNT: INTEGER := 8;
 CONSTANT ALU_F_SIZE: INTEGER := 4;
 CONSTANT ALU_SIZE : INTEGER := 16;
 CONSTANT FLAGS_COUNT: INTEGER := 3;
-CONSTANT COUNTER_SIZE: INTEGER := 8;
+CONSTANT COUNTER_SIZE: INTEGER := 16;
 CONSTANT PLA_LOAD_SIZE: INTEGER := 16;
 CONSTANT CTRL_WORD_SIZE: INTEGER := 21;
 CONSTANT CTRL_SIGNALS_SIZE: INTEGER := 61;
-CONSTANT RAM_SIZE: INTEGER := 128;
+CONSTANT RAM_SIZE: INTEGER := 65536;
 CONSTANT RAM_WIDTH: INTEGER := 16;
 
 -- GENERAL PURPOSE REGISTERS
@@ -103,7 +103,7 @@ SIGNAL MDR_ram_en: std_logic;
 SIGNAL MDR_reset: std_logic;
 
 SIGNAL Tri_MDR_en: std_logic;
--- SIGNAL Tri_MDR_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL Tri_MDR_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
 
 SIGNAL MAR_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
 SIGNAL MAR_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
@@ -129,8 +129,8 @@ SIGNAL uPC_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
 SIGNAL uPC_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
 
 -- HALT
-SIGNAL HALT_in: std_logic;
-SIGNAL HALT_out: std_logic;
+SIGNAL HALT_in: std_logic_vector(0 DOWNTO 0);
+SIGNAL HALT_out: std_logic_vector(0 DOWNTO 0);
 SIGNAL HALT_en: std_logic;
 SIGNAL HALT_reset: std_logic;
 
@@ -154,41 +154,57 @@ SIGNAL clk : std_logic;
 -- BUS
 SIGNAL shared_bus : std_logic_vector(BUS_SIZE-1 DOWNTO 0);
 
+-- GLOBAL RESET
+SIGNAL reset_all: std_logic;
+-- TODO: wassal le reset_all
+
 BEGIN
 
 -- REGISTERS
 
 -- GENERAL PURPOSE
 generate_Rx: FOR i IN 0 TO 7 GENERATE
-	Rx: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP (clk, Rx_en(i), Rx_reset(i), shared_bus, Rx_out(i));
+  Rx: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP (clk, Rx_en(i), Rx_reset(i), Rx_in(i), Rx_out(i));
+  Rx_in(i) <= shared_bus;
 END GENERATE;
 generate_Tri_Rx: FOR i IN 0 TO 7 GENERATE
-  Tri_Rx: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_Rx_en(i), Rx_out(i), shared_bus);
+  Tri_Rx: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_Rx_en(i), Rx_out(i), Tri_RX_out(i));
+  shared_bus <= Tri_Rx_out(i);
 END GENERATE;
 
 -- INTERMEDIATE 
-INTERMEDIATE_SRC: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, INT_SRC_en, INT_SRC_reset, shared_bus, INT_SRC_out);
-Tri_INTERMEDIATE_SRC: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_INT_SRC_en, INT_SRC_out, shared_bus);
+INTERMEDIATE_SRC: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, INT_SRC_en, INT_SRC_reset, INT_SRC_in, INT_SRC_out);
+INT_SRC_in <= shared_bus;
+Tri_INTERMEDIATE_SRC: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_INT_SRC_en, INT_SRC_out, Tri_INT_SRC_out);
+shared_bus <= Tri_INT_SRC_out;
 
-INTERMEDIATE_DST: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, INT_DST_en, INT_DST_reset, shared_bus, INT_DST_out);
-Tri_INTERMEDIATE_DST: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_INT_DST_en, INT_DST_out, shared_bus);
+INTERMEDIATE_DST: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, INT_DST_en, INT_DST_reset, INT_DST_in, INT_DST_out);
+INT_DST_in <= shared_bus;
+Tri_INTERMEDIATE_DST: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_INT_DST_en, INT_DST_out, Tri_INT_DST_out);
+shared_bus <= Tri_INT_DST_out;
 
 -- STATUS
 -- DONE: need to handle status in signal
 STATUS_REGISTER: ENTITY work.n2DFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, Rstatus_reset, Rstatus_bus_en, Rstatus_bus_in, Rstatus_alu_en, Rstatus_alu_in, Rstatus_out);
+Rstatus_bus_in <= shared_bus;
 Rstatus_alu_en <= not(ALU_F(3) AND ALU_F(2) AND ALU_F(1) AND ALU_F(0)); -- Rstatus_alu_en =  ALU_F!=1111
 Rstatus_alu_in <= ("0000000000000" & ALU_flags);
-Tri_Rstatus: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_Rstatus_en, Rstatus_out, shared_bus);
+Tri_Rstatus: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_Rstatus_en, Rstatus_out, Tri_Rstatus_out);
+shared_bus <= Tri_Rstatus_out;
 
 -- IR
 -- TODO: Add IR output circuit
-IR: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, IR_en, IR_reset, shared_bus, IR_out); 
+IR: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, IR_en, IR_reset, IR_in, IR_out); 
+IR_in <= shared_bus;
 
 -- ALU REGISTERS
-ALU_Y_REGISTER: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, Ry_en, Ry_reset, shared_bus, Ry_out);
+ALU_Y_REGISTER: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, Ry_en, Ry_reset, Ry_in, Ry_out);
+Ry_in <= shared_bus;
+
 
 ALU_Z_REGISTER: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, Rz_en, Rz_reset, Rz_in, Rz_out); 
-Tri_Rz: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_INT_DST_en, INT_DST_out, shared_bus);
+Tri_Rz: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_Rz_en, Rz_out, Tri_Rz_out);
+shared_bus <= Tri_Rz_out;
 
 -- ALU
 ALU: ENTITY work.ALU(main) GENERIC MAP(ALU_SIZE) PORT MAP(Ry_out, shared_bus, ALU_F, ALU_Cin, Rz_in, ALU_flags);
@@ -201,18 +217,18 @@ RAM: ENTITY work.nmRam(main) GENERIC MAP(RAM_SIZE, RAM_WIDTH) PORT MAP(clk, RAM_
 -- DONE: need to handle MDR in signal
 MDR_REGISTER: ENTITY work.n2DFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, MDR_reset, MDR_bus_en, MDR_bus_in, MDR_ram_en, MDR_ram_in, MDR_out);
 MDR_ram_en <= RAM_read; -- BUG: should be connected with MFC instead?
+Tri_MDR: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_MDR_en, MDR_out, Tri_MDR_out);
+shared_bus <= Tri_MDR_out;
 
-
-Tri_MDR: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_MDR_en, MDR_out, shared_bus);
-
-MAR_REGISTER: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, MAR_en, MAR_reset, shared_bus, MAR_out);
-
+MAR_REGISTER: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, MAR_en, MAR_reset, MAR_in, MAR_out);
+MAR_in <= shared_bus;
 
 -- TODO: ADD Interrupt Address Logic Circuit
 
 -- CONTROL STEP COUNTER
 CONTROL_STEP_COUNTER: ENTITY work.nCounter(main) GENERIC MAP(COUNTER_SIZE) PORT MAP(clk, CTRL_COUNTER_en, CTRL_COUNTER_mode, CTRL_COUNTER_reset, CTRL_COUNTER_load, CTRL_COUNTER_in, CTRL_COUNTER_out);
 CTRL_COUNTER_mode <= '0';
+CTRL_COUNTER_en <= '1';
 
 -- PLA
 PLA: ENTITY work.PLA(main) GENERIC MAP(REG_SIZE, COUNTER_SIZE) PORT MAP(IR_out, CTRL_COUNTER_out, Rstatus_out, uPC_in, HALT_en);
@@ -222,10 +238,11 @@ uPC: ENTITY work.nCounter(main) GENERIC MAP(COUNTER_SIZE) PORT MAP(clk, uPC_en, 
 
 uPC_mode <= '0';
 -- TODO: add RUN signal condition here
-uPC_en <= (not (HALT_out));
+uPC_en <= (not (HALT_out(0)));
 
 -- HALT
-HALT_in <= '1';
+HALT_REG: ENTITY work.nDFF(main) GENERIC MAP(1) PORT MAP(clk, HALT_en, HALT_reset, HALT_in, HALT_out);
+HALT_in <= "1";
 
 
 -- ROM
