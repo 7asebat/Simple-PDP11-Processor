@@ -157,9 +157,9 @@ begin
 
     --F5, F7, F8, F9, F10 don't need decoders and can be connected directly to control signals 
 
-    -- (
+-- (
     --     uBranch(0), WMFC(1), Carry_in(2), Clear_Y(3), Read(4), Write(5), ALU(6,7,8,9)
-    --     DSTin(10), SRCin(11), Yin(12), MDRin(13), MARin(14), (Status)in(15), SPin(16), 
+    --     Yin(10), SRCin(11), DSTin(12), MARin(13), MDRin(14), (Status)in(15), SPin(16), 
     --     R0dst_in(17), R1dst_in(18), R2dst_in(19), R3dst_in(20), R4dst_in(21), R5dst_in(22), R6dst_in(23),
     --     R7dst_in(24), R0src_in(25), R1src_in(26), R2src_in(27), R3src_in(28), R4src_in(29), R5src_in(30), R6src_in(31),
     --     R7src_in(32), PCin(33), IRin(34), Zin(35), (SRC)out(36), (DST)out(37), (Address)out(38), (Status)out(39), 

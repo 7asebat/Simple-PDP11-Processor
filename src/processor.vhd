@@ -259,11 +259,11 @@ Ry_reset <= CTRL_SIGNALS(3);
 RAM_read <= CTRL_SIGNALS(4);
 RAM_write <= CTRL_SIGNALS(5);
 ALU_F <= CTRL_SIGNALS(9 DOWNTO 6);
-INT_DST_en <= CTRL_SIGNALS(10);
+INT_DST_en <= CTRL_SIGNALS(12);
 INT_SRC_en <= CTRL_SIGNALS(11);
-Ry_en <= CTRL_SIGNALS(12);
-MDR_bus_en <= CTRL_SIGNALS(13); -- DONE: make sure to edit this when MDR multiple inputs are handled
-MAR_en <= CTRL_SIGNALS(14);
+Ry_en <= CTRL_SIGNALS(10);
+MAR_en <= CTRL_SIGNALS(13);
+MDR_bus_en <= CTRL_SIGNALS(14); -- DONE: make sure to edit this when MDR multiple inputs are handled
 Rstatus_bus_en <= CTRL_SIGNALS(15); -- DOBE: make sure to edit this when status multiple inputs are handled
 
 Rx_en(0) <= (CTRL_SIGNALS(17) OR CTRL_SIGNALS(25));
