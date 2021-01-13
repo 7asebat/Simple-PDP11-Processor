@@ -129,12 +129,13 @@ SIGNAL HALT_en: std_logic;
 SIGNAL HALT_reset: std_logic;
 
 -- uIR
-
 SIGNAL uIR_sig: std_logic_vector(CTRL_WORD_SIZE-1 DOWNTO 0);
 
 -- CONTROL SIGNALS
-
 SIGNAL CTRL_SIGNALS: std_logic_vector(CTRL_SIGNALS_SIZE-1 DOWNTO 0);
+
+-- WMFC
+SIGNAL WMFC: std_logic;
 
 -- CLK
 SIGNAL clk : std_logic;
@@ -214,6 +215,8 @@ ROM: ENTITY work.nmROM(main) PORT MAP(uPC_out, uIR_sig);
 CTRL_WORD_DECODER: ENTITY work.controlWordDecoder(main) PORT MAP(uIR_sig, IR_out, CTRL_SIGNALS);
 
 -- TODO: Add Read and Write signals to RAM from CTRL_SIGNALS
+uPC_load <= CTRL_SIGNALS(0);
+WMFC <= CTRL_SIGNALS(1);
 ALU_Cin <= CTRL_SIGNALS(2);
 Ry_reset <= CTRL_SIGNALS(3);
 ALU_F <= CTRL_SIGNALS(9 DOWNTO 6);
