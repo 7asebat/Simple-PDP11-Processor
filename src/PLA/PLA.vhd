@@ -850,14 +850,18 @@ begin
 				(signed(controlStepCounter) = 24 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT  AND IR(n-1 DOWNTO n-4) /= MOV_INSTRUCTION)
 				
 			) THEN
-
-				-- DEST FETCHING
-				IF IR(n-11 DOWNTO n-13) = "000" THEN
-					-- reg direct
-					load <= std_logic_vector(to_unsigned(CONTROL_DIRECT_REGISTER_MODE, load'length));
-				ELSE 
-					load <= std_logic_vector(to_unsigned(CONTROL_INDIRECT_WRITE_MODE, load'length));
+				IF IR(n-1 DOWNTO n-4) = CMP_INSTRUCTION THEN
+					load <= (OTHERS => '0');
+				else
+					IF IR(n-11 DOWNTO n-13) = "000" THEN
+						-- reg direct
+						load <= std_logic_vector(to_unsigned(CONTROL_DIRECT_REGISTER_MODE, load'length));
+					ELSE 
+						load <= std_logic_vector(to_unsigned(CONTROL_INDIRECT_WRITE_MODE, load'length));
+					END IF;
 				END IF;
+				-- DEST FETCHING
+
 			END IF;
 
 			IF (
