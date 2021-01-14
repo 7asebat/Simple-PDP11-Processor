@@ -248,6 +248,7 @@ MAR_in <= shared_bus;
 CONTROL_STEP_COUNTER: ENTITY work.nCounter(main) GENERIC MAP(COUNTER_SIZE) PORT MAP(clk, CTRL_COUNTER_en, CTRL_COUNTER_mode, CTRL_COUNTER_reset, CTRL_COUNTER_load, CTRL_COUNTER_in, CTRL_COUNTER_out);
 CTRL_COUNTER_mode <= '0';
 CTRL_COUNTER_en <= (RUN AND (not (HALT_out(0))));
+CTRL_COUNTER_reset <= '1' WHEN (uPc_in = X"0000" AND uPC_load = '1') ELSE '0';
 
 -- PLA
 PLA: ENTITY work.PLA(main) GENERIC MAP(REG_SIZE, COUNTER_SIZE) PORT MAP(IR_out, CTRL_COUNTER_out, Rstatus_out, uPC_in, HALT_en);
@@ -260,7 +261,7 @@ uPC_mode <= '0';
 uPC_en <= (RUN AND (not (HALT_out(0))));
 
 -- MIU
-MIU: ENTITY work.MIU(main) PORT MAP(clk, MIU_reset, MIU_read, MIU_write, MIU_mfc, MIU_wmfc, MIU_mem_read, MIU_mem_write, MIU_run);
+MIU: ENTITY work.MIU(main) PORT MAP(inv_clk, MIU_reset, MIU_read, MIU_write, MIU_mfc, MIU_wmfc, MIU_mem_read, MIU_mem_write, MIU_run);
 MIU_wmfc <= WMFC;
 RUN <= MIU_run;
 MFC <= MIU_mfc;
