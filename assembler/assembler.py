@@ -88,8 +88,10 @@ print('\nLabels:')
 for k, v in labels.items():
     print(k, v)
 
-print('\nMemory:')
-for k, v in enumerate(Memory.items()):
-    if(v[0] % 4 == 0):
-        print(f'\n{v[0]:x}: ',end="")
-    print('{val}'.format(val=v[1]),end=" ")
+fn = (sys.argv[1]).split('.')[0]
+with open(f'{fn}.mem', 'w') as f:
+    f.write("// memory data file (do not edit the following line - required for mem load use)\n// instance=/processor/RAM/ram\n// format=mti addressradix=h dataradix=s version=1.0 wordsperline=4")
+    for k, v in enumerate(Memory.items()):
+        if(v[0] % 4 == 0):
+            f.write(f'\n{v[0]:x}: ')
+        f.write('{val} '.format(val=v[1]))
