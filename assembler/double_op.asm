@@ -24,8 +24,10 @@ XOR R0, RESXOR
 MOV RESXOR, R1 ; R1 = 2
 ; cmp
 CMP R0, RESCMPZ ; zero flag set
-CMP R0, RESCMPC ; carry flag set
 CMP R0, RESCMPN ; negative flag set
+CMP R0, RESCMPC ; carry flag set
+
+HLT
 
 Define RESADD 7
 Define RESADC 7

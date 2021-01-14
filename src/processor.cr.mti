@@ -6,6 +6,15 @@ Model Technology ModelSim - Intel FPGA Edition vcom 2020.1 Compiler 2020.02 Feb 
 -- Compiling entity INTERRUPT
 -- Compiling architecture interrupt_arch of INTERRUPT
 
+} {} {}} /d/cmp_3a/Computer_Architecture/project/src/PLA/PLA.vhd {1 {vcom -work work -2002 -explicit -stats=none /d/cmp_3a/Computer_Architecture/project/src/PLA/PLA.vhd
+Model Technology ModelSim - Intel FPGA Edition vcom 2020.1 Compiler 2020.02 Feb 28 2020
+-- Loading package STANDARD
+-- Loading package TEXTIO
+-- Loading package std_logic_1164
+-- Loading package NUMERIC_STD
+-- Compiling entity PLA
+-- Compiling architecture main of PLA
+
 } {} {}} /d/cmp_3a/Computer_Architecture/project/src/TristateBuffer/nTristateBuffer.vhd {1 {vcom -work work -2002 -explicit -stats=none /d/cmp_3a/Computer_Architecture/project/src/TristateBuffer/nTristateBuffer.vhd
 Model Technology ModelSim - Intel FPGA Edition vcom 2020.1 Compiler 2020.02 Feb 28 2020
 -- Loading package STANDARD
@@ -111,17 +120,6 @@ Model Technology ModelSim - Intel FPGA Edition vcom 2020.1 Compiler 2020.02 Feb 
 -- Loading package std_logic_1164
 -- Compiling entity partA
 -- Compiling architecture default of partA
-
-} {} {}} /d/cmp_3a/Computer_Architecture/project/src/RAM/nmRam.vhd {2 {vcom -work work -2002 -explicit -stats=none /d/cmp_3a/Computer_Architecture/project/src/RAM/nmRam.vhd
-Model Technology ModelSim - Intel FPGA Edition vcom 2020.1 Compiler 2020.02 Feb 28 2020
--- Loading package STANDARD
--- Loading package TEXTIO
--- Loading package std_logic_1164
--- Loading package NUMERIC_STD
--- Loading package MATH_REAL
--- Compiling entity nmRam
--- Compiling architecture main of nmRam
-** Warning: /d/cmp_3a/Computer_Architecture/project/src/RAM/nmRam.vhd(72): (vcom-1074) Non-locally static OTHERS choice is allowed only if it is the only choice of the only association.
 
 } {} {}} /d/cmp_3a/Computer_Architecture/project/src/controlSignals.vhd {1 {vcom -work work -2002 -explicit -stats=none /d/cmp_3a/Computer_Architecture/project/src/controlSignals.vhd
 Model Technology ModelSim - Intel FPGA Edition vcom 2020.1 Compiler 2020.02 Feb 28 2020

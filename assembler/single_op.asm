@@ -20,4 +20,16 @@ LSR R0  ; R0 = 2
 ;lsl
 LSL R0  ; R0 = 4
 
-; todo: asr, rol, ror
+;asr
+MOV #65535, R0 ; R0 = 65535
+ASR R0         ; R0 = 65535
+
+;rol
+MOV #65354, R0 ; R0 = 65354
+ROL R0         ; R0 = 65333
+
+;ror
+MOV #65535, R0 ; R0 = 65535
+ROR R0         ; R0 = 65535
+
+HLT
