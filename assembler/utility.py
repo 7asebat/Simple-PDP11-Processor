@@ -148,8 +148,7 @@ def get_addressing_mode(op,curr_addr):
         tempBitString[1] = f"{value:016b}"
 
     elif re.match(r'^[A-Z]+$', op):
-        variable = re.search('[A-Z]', op).group(0)
-
+        variable = op
         if variable in variables:
             address = variables[variable]['address']
             tempBitString[0] += addressing_mode_opcodes['indexed'] \
