@@ -640,7 +640,7 @@ begin
 				(signed(controlStepCounter) = 17 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT ) OR
 				(signed(controlStepCounter) = 18 AND IR(n-5 DOWNTO n-7) = AUTO_DECREMENT_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT ) OR
 				(signed(controlStepCounter) = 20 AND IR(n-5 DOWNTO n-7) = INDEXED AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT ) OR
-				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT ) OR
+				(signed(controlStepCounter) = 21 AND IR(n-5 DOWNTO n-7) = INDEXED_INDIRECT AND IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT )
 				) THEN
 				-- JUMP TO OPERAND INSTRUCTION
 				
