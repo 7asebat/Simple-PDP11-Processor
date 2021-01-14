@@ -1,7 +1,7 @@
 -- Working processor here
 Library ieee;
 Use ieee.std_logic_1164.all;
-
+use ieee.numeric_std.all;
 
 ENTITY PROCESSOR IS
 
@@ -22,6 +22,7 @@ CONSTANT CTRL_WORD_SIZE: INTEGER := 21;
 CONSTANT CTRL_SIGNALS_SIZE: INTEGER := 61;
 CONSTANT RAM_SIZE: INTEGER := 65536;
 CONSTANT RAM_WIDTH: INTEGER := 16;
+CONSTANT OFFSET_SIZE: INTEGER := 8;
 
 -- GENERAL PURPOSE REGISTERS
 
@@ -72,7 +73,10 @@ SIGNAL IR_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
 SIGNAL IR_en: std_logic;
 SIGNAL IR_reset: std_logic;
 
--- TODO: add address decoding circuit and connect it to bus
+-- DONE: add address decoding circuit and connect it to bus
+SIGNAL IRoffset: std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL Tri_IRoffset_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL Tri_IRoffset_en: std_logic;
 
 -- ALU REGISTERS
 SIGNAL Ry_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
@@ -205,15 +209,29 @@ shared_bus <= Tri_INT_DST_out;
 -- DONE: need to handle status in signal
 STATUS_REGISTER: ENTITY work.n2DFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, Rstatus_reset, Rstatus_bus_en, Rstatus_bus_in, Rstatus_alu_en, Rstatus_alu_in, Rstatus_out);
 Rstatus_bus_in <= shared_bus;
-Rstatus_alu_en <= not(ALU_F(3) AND ALU_F(2) AND ALU_F(1) AND ALU_F(0)); -- Rstatus_alu_en =  ALU_F!=1111
+-- Rstatus_alu_en <= not(ALU_F(3) AND ALU_F(2) AND ALU_F(1) AND ALU_F(0)); -- Rstatus_alu_en =  ALU_F!=1111
+Rstatus_alu_en <= '1' WHEN ( 
+  unsigned(uPC_out) >= 42 AND 
+  unsigned(uPC_out) <= 84 AND
+  (
+    unsigned(IR_out(REG_SIZE-1 DOWNTO REG_SIZE-4)) >= 0 AND
+    unsigned(IR_out(REG_SIZE-1 DOWNTO REG_SIZE-4)) <= 9
+  )
+) ELSE '0';
+
 Rstatus_alu_in <= ("0000000000000" & ALU_flags);
 Tri_Rstatus: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_Rstatus_en, Rstatus_out, Tri_Rstatus_out);
 shared_bus <= Tri_Rstatus_out;
 
 -- IR
--- TODO: Add IR output circuit
+-- DONE: Add IR output circuit
 IR: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, IR_en, IR_reset, IR_in, IR_out); 
 IR_in <= shared_bus;
+
+-- IR decoding circuit
+IRoffset <= "00000000" & IR_out(OFFSET_SIZE-1 DOWNTO 0);
+Tri_IRoffset: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP(Tri_IRoffset_en, IRoffset, Tri_IRoffset_out);
+shared_bus <= Tri_IRoffset_out;
 
 -- ALU REGISTERS
 ALU_Y_REGISTER: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, Ry_en, Ry_reset, Ry_in, Ry_out);
@@ -308,7 +326,7 @@ IR_en <= CTRL_SIGNALS(34);
 Rz_en <= CTRL_SIGNALS(35);
 Tri_INT_SRC_en <= CTRL_SIGNALS(36);
 Tri_INT_DST_en <= CTRL_SIGNALS(37);
--- TODO: Add Address_out signal to IR decoding circuit
+Tri_IRoffset_en <= CTRL_SIGNALS(38);
 Tri_Rstatus_en <= CTRL_SIGNALS(39);
 
 Tri_Rx_en(0) <= (CTRL_SIGNALS(42) OR CTRL_SIGNALS(50));
