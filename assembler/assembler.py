@@ -90,4 +90,4 @@ for k, v in labels.items():
 
 print('\nMemory:')
 for k, v in enumerate(Memory.items()):
-    print('{index} => "{val}"'.format(val=v[1],index=v[0]))
+    print('{index} => ("{val}"),'.format(val=v[1], index=v[0]))

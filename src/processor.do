@@ -23,7 +23,7 @@ vsim work.processor
 # Loading work.nmrom(main)
 # Loading work.controlworddecoder(main)
 # Loading work.decoder(decoder_arch)
-add wave -hex -position insertpoint  \
+add wave -decimal -position insertpoint  \
 sim:/processor/WMFC \
 sim:/processor/uPC_reset \
 sim:/processor/uPC_out \
@@ -143,3 +143,4 @@ noforce sim:/processor/INT_DST_reset
 noforce sim:/processor/HALT_reset
 noforce sim:/processor/CTRL_COUNTER_reset
 force -freeze sim:/processor/clk 1 0, 0 {50 ps} -r 100
+run 30ns

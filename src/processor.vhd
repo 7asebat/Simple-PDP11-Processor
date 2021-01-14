@@ -225,7 +225,7 @@ Tri_Rz: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_Rz
 shared_bus <= Tri_Rz_out;
 
 -- ALU
-ALU: ENTITY work.ALU(main) GENERIC MAP(ALU_SIZE) PORT MAP(Ry_out, shared_bus, ALU_F, ALU_Cin, Rz_in, ALU_flags);
+ALU: ENTITY work.ALU(main) GENERIC MAP(ALU_SIZE) PORT MAP(shared_bus, Ry_out, ALU_F, ALU_Cin, Rz_in, ALU_flags);
 
 -- RAM MEMORY
 
