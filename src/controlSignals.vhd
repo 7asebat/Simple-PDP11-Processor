@@ -21,7 +21,7 @@ architecture main of controlWordDecoder is
     signal F1_decoder_out: std_logic_vector(15 downto 0);
     signal F1_decoded: std_logic_vector(10 downto 0);
     signal R_SRCout_decoder_out, R_DSTout_decoder_out: std_logic_vector(7 downto 0);
-
+    signal R_DST_decoder_in: std_logic_vector(2 downto 0);
     --F2 signals
     signal F2_decoder_en: std_logic;
     signal F2_decoder_out: std_logic_vector(7 downto 0);
@@ -77,10 +77,11 @@ begin
                             EN => F1_decoded(3) --(R_src)out
                         );
 
+    R_DST_decoder_in <= IR(4 downto 2) when( unsigned(IR(15 downto 12)) = 9) ELSE IR(2 downto 0);
     R_DSTout_decoder:   entity work.decoder(decoder_arch)
                         generic map(3)
                         port map(
-                            A => IR(2 downto 0),
+                            A => R_DST_decoder_in,
                             F => R_DSTout_decoder_out,
                             EN => F1_decoded(4) --(R_dst)out
                         );    
@@ -109,7 +110,7 @@ begin
     R_DSTin_decoder:    entity work.decoder(decoder_arch)
                         generic map(3)
                         port map(
-                            A => IR(2 downto 0),
+                            A => R_DST_decoder_in,
                             F => R_DSTin_decoder_out,
                             EN => F2_decoded(4) --(R_dst)in
                         );
