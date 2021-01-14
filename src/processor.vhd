@@ -211,8 +211,27 @@ STATUS_REGISTER: ENTITY work.n2DFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, Rst
 Rstatus_bus_in <= shared_bus;
 -- Rstatus_alu_en <= not(ALU_F(3) AND ALU_F(2) AND ALU_F(1) AND ALU_F(0)); -- Rstatus_alu_en =  ALU_F!=1111
 Rstatus_alu_en <= '1' WHEN ( 
-  unsigned(uPC_out) >= 42 AND 
-  unsigned(uPC_out) <= 84 AND
+  (
+  unsigned(uPC_out) = 42 OR 
+  unsigned(uPC_out) = 45 OR 
+  unsigned(uPC_out) = 48 OR 
+  unsigned(uPC_out) = 51 OR 
+  unsigned(uPC_out) = 54 OR 
+  unsigned(uPC_out) = 57 OR 
+  unsigned(uPC_out) = 60 OR 
+  unsigned(uPC_out) = 63 OR 
+  unsigned(uPC_out) = 66 OR 
+  unsigned(uPC_out) = 68 OR 
+  unsigned(uPC_out) = 70 OR 
+  unsigned(uPC_out) = 72 OR 
+  unsigned(uPC_out) = 74 OR 
+  unsigned(uPC_out) = 76 OR 
+  unsigned(uPC_out) = 78 OR 
+  unsigned(uPC_out) = 80 OR 
+  unsigned(uPC_out) = 82 OR 
+  unsigned(uPC_out) = 84 
+  )
+  AND 
   (
     unsigned(IR_out(REG_SIZE-1 DOWNTO REG_SIZE-4)) >= 0 AND
     unsigned(IR_out(REG_SIZE-1 DOWNTO REG_SIZE-4)) <= 9

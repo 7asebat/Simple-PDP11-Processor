@@ -243,45 +243,45 @@ begin
 			-- branch instruction
 
 			IF (signed(controlStepCounter) = 3) THEN -- go to corresponding branch instruction
-				IF IR(n-5 DOWNTO n-7) = "000" THEN
+				IF IR(n-3 DOWNTO n-5) = "000" THEN
 					-- BR instruction
 					load <= std_logic_vector(to_unsigned(CONTROL_BRANCH_OFFSET, load'length)); -- Branch Offset
-				ELSIF IR(n-5 DOWNTO n-7) = "001" THEN
+				ELSIF IR(n-3 DOWNTO n-5) = "001" THEN
 					-- BEQ instruction
 					IF status_Z = '1' THEN
 						load <= std_logic_vector(to_unsigned(CONTROL_BRANCH_OFFSET, load'length)); -- Branch Offset
 					ELSE
 						load <= std_logic_vector(to_unsigned(CONTROL_END, load'length)); -- END
 					END IF;
-				ELSIF IR(n-5 DOWNTO n-7) = "010" THEN
+				ELSIF IR(n-3 DOWNTO n-5) = "010" THEN
 					-- BNE instruction
 					IF status_Z = '0' THEN
 						load <= std_logic_vector(to_unsigned(CONTROL_BRANCH_OFFSET, load'length)); -- Branch Offset
 					ELSE
 						load <= std_logic_vector(to_unsigned(CONTROL_END, load'length)); -- END
 					END IF;
-				ELSIF IR(n-5 DOWNTO n-7) = "011" THEN
+				ELSIF IR(n-3 DOWNTO n-5) = "011" THEN
 					-- BLO instruction
 					IF status_C = '1' THEN
 						load <= std_logic_vector(to_unsigned(CONTROL_BRANCH_OFFSET, load'length)); -- Branch Offset
 					ELSE
 						load <= std_logic_vector(to_unsigned(CONTROL_END, load'length)); -- END
 					END IF;
-				ELSIF IR(n-5 DOWNTO n-7) = "100" THEN
+				ELSIF IR(n-3 DOWNTO n-5) = "100" THEN
 					-- BLS instruction
 					IF status_C = '0' OR status_Z = '1' THEN
 						load <= std_logic_vector(to_unsigned(CONTROL_BRANCH_OFFSET, load'length)); -- Branch Offset
 					ELSE
 						load <= std_logic_vector(to_unsigned(CONTROL_END, load'length)); -- END
 					END IF;
-				ELSIF IR(n-5 DOWNTO n-7) = "101" THEN
+				ELSIF IR(n-3 DOWNTO n-5) = "101" THEN
 					-- BHI instruction
 					IF status_C = '1' THEN
 						load <= std_logic_vector(to_unsigned(CONTROL_BRANCH_OFFSET, load'length)); -- Branch Offset
 					ELSE
 						load <= std_logic_vector(to_unsigned(CONTROL_END, load'length)); -- END
 					END IF;
-				ELSIF IR(n-5 DOWNTO n-7) = "110" THEN
+				ELSIF IR(n-3 DOWNTO n-5) = "110" THEN
 					-- BHS instruction
 					IF status_C = '1' OR status_Z = '1' THEN
 						load <= std_logic_vector(to_unsigned(CONTROL_BRANCH_OFFSET, load'length)); -- Branch Offset
