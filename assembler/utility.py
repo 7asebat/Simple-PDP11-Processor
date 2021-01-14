@@ -119,6 +119,7 @@ def get_addressing_mode(op,curr_addr):
     elif re.match(r"^\d+\(([^)]+)\)$", op):
         tempBitString[0] += addressing_mode_opcodes['indexed'] \
             + register_opcodes[register]
+        tempBitString[1] = f"{int(op.split('(')[0]):016b}"
 
     elif re.match(r"^\@R[0-7]$", op):
         tempBitString[0] += addressing_mode_opcodes['reg_indirect'] \
