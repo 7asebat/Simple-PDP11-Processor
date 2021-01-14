@@ -234,6 +234,7 @@ RAM: ENTITY work.nmRam(main) GENERIC MAP(RAM_SIZE, RAM_WIDTH) PORT MAP(inv_clk, 
 -- MEMORY REGISTERS
 -- DONE: need to handle MDR in signal
 MDR_REGISTER: ENTITY work.n2DFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, MDR_reset, MDR_bus_en, MDR_bus_in, MDR_ram_en, MDR_ram_in, MDR_out);
+MDR_bus_in <= shared_bus;
 MDR_ram_en <= MFC; -- DONE: should be connected with MFC instead?
 
 Tri_MDR: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_MDR_en, MDR_out, Tri_MDR_out);
