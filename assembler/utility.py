@@ -333,3 +333,86 @@ def write_memory_to_file(filePath):
     for i in sorted(Memory):
       word = int(Memory[i], 2).to_bytes(2, byteorder='big')
       f.write(word)
+
+def writeDoFile(fn,memoryImport):
+    with open(f'{fn}.do', 'w') as f:
+        f.write(
+f'''vsim work.processor\n
+
+{memoryImport}\n
+
+add wave -dec -position insertpoint \ \n
+\ \n
+sim:/processor/Rx_out(7) \ \n
+sim:/processor/CTRL_COUNTER_out \ \n
+sim:/processor/uPC_out \ \n
+-hex \ \n
+sim:/processor/WMFC \ \n
+sim:/processor/MFC \ \n
+sim:/processor/RUN \ \n
+sim:/processor/clk \ \n
+\ \n
+sim:/processor/MIU_read \ \n
+sim:/processor/MIU_write \ \n
+sim:/processor/MIU_mem_write \ \n
+sim:/processor/MIU_mem_read \\n
+\ \n
+\ \n
+-dec sim:/processor/MDR_out \ \n
+sim:/processor/MAR_out \ \n
+\ \n
+-hex sim:/processor/CTRL_SIGNALS \ \n
+sim:/processor/uIR_sig \ \n
+\ \n
+sim:/processor/IR_out \ \n
+sim:/processor/ALU_flags \ \n
+sim:/processor/ALU_F \ \n
+sim:/processor/ALU_Cin \ \n
+\ \n
+sim:/processor/shared_bus \ \n
+\ \n
+-dec sim:/processor/Rx_out \ \n
+sim:/processor/INT_SRC_out \ \n
+sim:/processor/INT_DST_out \ \n
+sim:/processor/Rstatus_out \ \n 
+
+# sim:/processor/MDR_REGISTER/A_en \ \n
+# sim:/processor/MDR_REGISTER/A_in \ \n
+# sim:/processor/MDR_REGISTER/B_en \ \n
+# sim:/processor/MDR_REGISTER/B_in \ \n
+# sim:/processor/RAM/dataIn \ \n
+# sim:/processor/RAM/dataOut \ \n
+
+force -freeze sim:/processor/clk 1 0 \n
+force -freeze sim:/processor/uPC_reset 1 0 \n
+force -freeze sim:/processor/MIU_reset 1 0 \n
+force -freeze sim:/processor/Rz_reset 1 0 \n
+force -freeze sim:/processor/Ry_reset 1 0 \n
+force -freeze sim:/processor/Rstatus_reset 1 0 \n
+force -freeze sim:/processor/MDR_reset 1 0 \n
+force -freeze sim:/processor/MAR_reset 1 0 \n
+force -freeze sim:/processor/IR_reset 1 0 \n
+force -freeze sim:/processor/INT_SRC_reset 1 0 \n
+force -freeze sim:/processor/INT_DST_reset 1 0 \n
+force -freeze sim:/processor/HALT_reset 1 0 \n
+force -freeze sim:/processor/CTRL_COUNTER_reset 1 0 \n
+force -freeze sim:/processor/Rx_reset 11111111 0 \n
+run \n
+
+noforce sim:/processor/uPC_reset \n
+noforce sim:/processor/MIU_reset \n
+noforce sim:/processor/Rz_reset \n
+noforce sim:/processor/Ry_reset \n
+noforce sim:/processor/Rx_reset \n
+noforce sim:/processor/Rstatus_reset \n
+noforce sim:/processor/MDR_reset \n
+noforce sim:/processor/MAR_reset \n
+noforce sim:/processor/IR_reset \n
+noforce sim:/processor/INT_SRC_reset \n
+noforce sim:/processor/INT_DST_reset \n
+noforce sim:/processor/HALT_reset \n
+noforce sim:/processor/CTRL_COUNTER_reset \n
+noforce sim:/processor/Rx_reset \n
+force -freeze sim:/processor/clk 1 0, 0 {{50 ps}} -r 100 \n
+
+run 100ns;''')

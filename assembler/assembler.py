@@ -95,3 +95,5 @@ with open(f'{fn}.mem', 'w') as f:
         if(v[0] % 4 == 0):
             f.write(f'\n{v[0]:x}: ')
         f.write('{val} '.format(val=v[1]))
+
+writeDoFile(fn,f'mem load -i ./{fn}.mem /processor/RAM/ram')
