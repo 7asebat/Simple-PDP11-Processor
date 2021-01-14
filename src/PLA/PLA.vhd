@@ -465,15 +465,15 @@ begin
 					-- reg indirect instruction
 					load <= std_logic_vector(to_unsigned(CONTROL_DESTINATION_INDIRECT_REGISTER, load'length));
 				
-				ELSIF IR(n-11 DOWNTO n-13) = AUTO_INCREMENT THEN
+				ELSIF IR(n-11 DOWNTO n-13) = AUTO_INCREMENT OR IR(n-11 DOWNTO n-13) = AUTO_INCREMENT_INDIRECT THEN
 					-- auto increment instruction [SHOULD HANDLE DIRECT AND INDIRECT]
 					load <= std_logic_vector(to_unsigned(CONTROL_DESTINATION_AUTOINCREMENT, load'length));
 
-				ELSIF IR(n-11 DOWNTO n-13) = AUTO_DECREMENT THEN
+				ELSIF IR(n-11 DOWNTO n-13) = AUTO_DECREMENT OR IR(n-11 DOWNTO n-13) = AUTO_DECREMENT_INDIRECT THEN
 					-- auto decrement instruction [SHOULD HANDLE DIRECT AND INDIRECT]
 					load <= std_logic_vector(to_unsigned(CONTROL_DESTINATION_AUTODECREMENT, load'length));
 
-				ELSIF IR(n-11 DOWNTO n-13) = INDEXED THEN
+				ELSIF IR(n-11 DOWNTO n-13) = INDEXED OR IR(n-11 DOWNTO n-13) = INDEXED_INDIRECT THEN
 					-- indexed instruction [SHOULD HANDLE DIRECT AND INDIRECT]
 					load <= std_logic_vector(to_unsigned(CONTROL_DESTINATION_INDEXED, load'length));
 				END IF;
