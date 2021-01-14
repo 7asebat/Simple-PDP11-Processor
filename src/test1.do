@@ -57,7 +57,7 @@ force -freeze sim:/processor/INT_DST_reset 1 0
 force -freeze sim:/processor/HALT_reset 1 0
 force -freeze sim:/processor/CTRL_COUNTER_reset 1 0
 force -freeze sim:/processor/Rx_reset 11111111 0
-run 100ps;
+run
 
 noforce sim:/processor/uPC_reset
 noforce sim:/processor/MIU_reset
@@ -73,6 +73,6 @@ noforce sim:/processor/INT_DST_reset
 noforce sim:/processor/HALT_reset
 noforce sim:/processor/CTRL_COUNTER_reset
 noforce sim:/processor/Rx_reset
-force -freeze sim:/processor/clk 0 0, 1 {500 ps} -r 1000
+force -freeze sim:/processor/clk 1 0, 0 {50 ps} -r 100
 
 run 100ns;
