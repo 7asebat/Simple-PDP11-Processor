@@ -1,13 +1,13 @@
-Mov #100,R6
-Mov #12,R2
-Mov R6,-(R2)
-Add R2,-(R2)
+Mov #100,R6   ; address 0
+Mov #12,R2    ; address 2
+Mov R6,-(R2)  ; address 4
+Add R2,-(R2)  ; address 5
 Loopa:
-INc R4
-Inc R4
-NOP
-CMP R4,R4
-BNE loopa
-HLT
+INc R4        ; address 6
+Inc R4        ; address 7
+NOP           ; address 8
+CMP R4,R4     ; address 9
+BNE loopa     ; address 10
+HLT           ; address 11
 
-DEFINE M 10
+DEFINE M 10   ; address 12

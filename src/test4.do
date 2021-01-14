@@ -35,6 +35,8 @@ sim:/processor/shared_bus \
 -dec sim:/processor/Rx_out \
 sim:/processor/INT_SRC_out \
 sim:/processor/INT_DST_out \
+sim:/processor/Rstatus_out \
+
 
 # sim:/processor/MDR_REGISTER/A_en \
 # sim:/processor/MDR_REGISTER/A_in \
