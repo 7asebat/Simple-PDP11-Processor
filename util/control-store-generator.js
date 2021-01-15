@@ -7,6 +7,7 @@ const fs = require("fs");
   lines = lines
     .map((el) => {
       el = el.split("\t").join("");
+      el = el.replace("\r", "");
       return el;
     })
     .filter((el) => el !== "")

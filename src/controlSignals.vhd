@@ -4,9 +4,9 @@ use IEEE.numeric_std.all;
 
 entity controlWordDecoder is
     port(
-        uIR : in std_logic_vector(20 downto 0);
+        uIR : in std_logic_vector(21 downto 0);
         IR: in std_logic_vector(15 downto 0);
-        controlSignals : out std_logic_vector(60 downto 0)
+        controlSignals : out std_logic_vector(61 downto 0)
     );
 end controlWordDecoder;
 
@@ -14,7 +14,8 @@ architecture main of controlWordDecoder is
     signal F1,F5: std_logic_vector(3 downto 0);
     signal F2: std_logic_vector(2 downto 0);
     signal F3,F4,F6: std_logic_vector(1 downto 0);
-    signal F7,F8,F9,F10: std_logic;
+    signal F8: std_logic_vector(1 downto 0);
+    signal F7,F9,F10: std_logic;
 
     --F1 signals
     signal F1_decoder_en: std_logic;
@@ -45,14 +46,14 @@ architecture main of controlWordDecoder is
 
 begin
     -- Initializing signals with uIR values
-    F1 <= uIR(20 downto 17);
-    F2 <= uIR(16 downto 14);
-    F3 <= uIR(13 downto 12);
-    F4 <= uIR(11 downto 10);
-    F5 <= uIR(9 downto 6);
-    F6 <= uIR(5 downto 4);
-    F7 <= uIR(3);
-    F8 <= uIR(2);
+    F1 <= uIR(21 downto 18);
+    F2 <= uIR(17 downto 15);
+    F3 <= uIR(14 downto 13);
+    F4 <= uIR(12 downto 11);
+    F5 <= uIR(10 downto 7);
+    F6 <= uIR(6 downto 5);
+    F7 <= uIR(4);
+    F8 <= uIR(3 downto 2); -- 00: CLR, 01: SET, 10: Carry flag, 11: !Carry flag
     F9 <= uIR(1);
     F10 <= uIR(0);
 
@@ -172,19 +173,19 @@ begin
     --Assigning outputs to controlsignals vector
     controlSignals(0) <= F10;
     controlSignals(1) <= F9;
-    controlSignals(2) <= F8;
-    controlSignals(3) <= F7;
-    controlSignals(5 downto 4) <= F6_decoded;
-    controlSignals(9 downto 6) <= F5;
-    controlSignals(12 downto 10) <= F4_decoded;
-    controlSignals(14 downto 13) <= F3_decoded;
-    controlSignals(16 downto 15) <= F2_decoded(6 downto 5);
-    controlSignals(24 downto 17) <= R_DSTin_decoder_out;
-    controlSignals(32 downto 25) <= R_SRCin_decoder_out;
-    controlSignals(35 downto 33) <= F2_decoded(2 downto 0);
-    controlSignals(41 downto 36) <= F1_decoded(10 downto 5);
-    controlSignals(49 downto 42) <= R_DSTout_decoder_out;
-    controlSignals(57 downto 50) <= R_SRCout_decoder_out;
-    controlSignals(60 downto 58) <= F1_decoded(2 downto 0);
+    controlSignals(3 downto 2) <= F8;
+    controlSignals(4) <= F7;
+    controlSignals(6 downto 5) <= F6_decoded;
+    controlSignals(10 downto 7) <= F5;
+    controlSignals(13 downto 11) <= F4_decoded;
+    controlSignals(15 downto 14) <= F3_decoded;
+    controlSignals(17 downto 16) <= F2_decoded(6 downto 5);
+    controlSignals(25 downto 18) <= R_DSTin_decoder_out;
+    controlSignals(33 downto 26) <= R_SRCin_decoder_out;
+    controlSignals(36 downto 34) <= F2_decoded(2 downto 0);
+    controlSignals(42 downto 37) <= F1_decoded(10 downto 5);
+    controlSignals(50 downto 43) <= R_DSTout_decoder_out;
+    controlSignals(58 downto 51) <= R_SRCout_decoder_out;
+    controlSignals(61 downto 59) <= F1_decoded(2 downto 0);
 
 end architecture;
