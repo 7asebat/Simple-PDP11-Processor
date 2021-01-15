@@ -363,20 +363,25 @@ sim:/processor/MIU_mem_read \
 -dec sim:/processor/MDR_out \
 sim:/processor/MAR_out \
 \
--hex sim:/processor/CTRL_SIGNALS \
-sim:/processor/uIR_sig \
-\
-sim:/processor/IR_out \
+-bin \
 sim:/processor/ALU_flags \
 sim:/processor/ALU_F \
 sim:/processor/ALU_Cin \
 \
+-hex \
 sim:/processor/shared_bus \
 \
--dec sim:/processor/Rx_out \
+-dec \
+sim:/processor/Rx_out \
 sim:/processor/INT_SRC_out \
 sim:/processor/INT_DST_out \
 sim:/processor/Rstatus_out \
+
+
+# -hex \
+# sim:/processor/CTRL_SIGNALS \
+# sim:/processor/uIR_sig \
+# sim:/processor/IR_out \
 
 # sim:/processor/MDR_REGISTER/A_en \
 # sim:/processor/MDR_REGISTER/A_in \
