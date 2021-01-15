@@ -1,7 +1,7 @@
 0: Mov #100,R6
 2: Mov #10,R2
-4: Mov R6,4(R2)
-6: Add R2,4(R2)
+4: Mov 4(R2), R6
+6: Add 4(R2), R2
 Loopa:
 8: INc R4
 9: Inc R4
@@ -17,9 +17,9 @@ DEFINE M 10
 ; Mov #10, R2:
 ; R2 = 10
 ; Mov R6, 4(R2):
-; R6 = 20
+; R6 = 10
 ; Add R2, 4(R2):
-; R2 = 23
+; R2 = 20
 ; INC R4:
 ; R4 = 1
 ; INC R4:

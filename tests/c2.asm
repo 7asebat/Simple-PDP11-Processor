@@ -1,7 +1,7 @@
 Mov #100,R6
 Mov #20,R2
-Mov R6,R2
-And R2,R2
+Mov R2, R6
+And R2, R2
 Loopa:
 INc R4
 Inc R4
@@ -17,7 +17,7 @@ HLT
 ; Mov R6, R2:
 ; R6 = 20
 ; And R2, R2:
-; R2 = FFFF
+; R2 = 20
 ; INC R4:
 ; R4 = 1
 ; INC R4:

@@ -1,7 +1,7 @@
 0: Mov #100,R6
 2: Mov #14,R2
-4: Mov R6,-(R2)
-5: Add R2,-(R2)
+4: Mov -(R2), R6
+5: Add -(R2), R2
 Loopa:
 6: INc R4
 7: Inc R4
@@ -24,7 +24,7 @@ DEFINE N 20
 ; INC R4:
 ; R4 = 1
 ; INC R4:
-; R4 = 1
+; R4 = 2
 ; NOP:
 ; CMP R4, R4:
 ; E flag = 1

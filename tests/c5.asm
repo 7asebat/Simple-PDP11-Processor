@@ -1,7 +1,7 @@
 0: Mov #100,R6
 2: Mov #14,R2
-4: Mov R6,@-(R2)
-5: Add R2,@-(R2)
+4: Mov @-(R2), R6
+5: Add @-(R2), R2
 Loopa:
 6: Inc R4
 7: Inc R4
@@ -10,14 +10,14 @@ Loopa:
 10: BNE loopa
 11: HLT
 
-DEFINE M 13
-DEFINE N 14
+DEFINE M 14
+DEFINE N 15
 DEFINE X 20
 DEFINE Y 25
 
 ; Mov #100, R6:
 ; R6 = 100
-; Mov #13, R2:
+; Mov #14, R2:
 ; R2 = 14
 ; Mov R6, @-(R2):
 ; R6 = 25, R2=13
