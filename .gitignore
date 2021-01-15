@@ -16,6 +16,7 @@
 # ModelSim files
 **/transcript
 **/*.wlf
+**/wlf*
 **/*_info
 **/*_vmake
 **/*.qdb
@@ -23,6 +24,8 @@
 **/*.qtl
 **/*.cr.mti
 **/*.mpf
+*.mti
+**/work/*
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,vim,vscode,binary
@@ -190,4 +193,3 @@ tags
 [._]*.un~
 
 # End of https://www.toptal.com/developers/gitignore/api/python,vim,vscode,binary
-*.mti

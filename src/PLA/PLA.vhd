@@ -15,6 +15,9 @@ architecture main of PLA is
 	signal partAOutput, partBOutput, partCOutput, partDOutput : std_logic_vector(n-1 downto 0);
 	signal partACarry, partCCarry, partDCarry : std_logic;	
 	signal status_N, status_Z, status_C : std_logic;
+
+	alias IR_opcode: std_logic_vector(3 downto 0) is IR(n-1 downto n-4);
+	alias IR_destination_adr: std_logic_vector(2 downto 0) is IR(n-9 downto n-11);
 begin
 	status_N <= statusRegister(0);
 	status_C <= statusRegister(1);
