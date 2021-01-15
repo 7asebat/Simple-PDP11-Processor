@@ -26,6 +26,10 @@
 **/*.mpf
 *.mti
 **/work/*
+**/*.mem
+**/*.bin
+**/*.do
+**/*.vstf
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,vim,vscode,binary

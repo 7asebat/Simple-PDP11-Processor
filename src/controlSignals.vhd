@@ -160,14 +160,14 @@ begin
     --F5, F7, F8, F9, F10 don't need decoders and can be connected directly to control signals 
 
 -- (
-    --     uBranch(0), WMFC(1), Carry_in(2), Clear_Y(3), Read(4), Write(5), ALU(6,7,8,9)
-    --     Yin(10), SRCin(11), DSTin(12), MARin(13), MDRin(14), (Status)in(15), SPin(16), 
-    --     R0dst_in(17), R1dst_in(18), R2dst_in(19), R3dst_in(20), R4dst_in(21), R5dst_in(22), R6dst_in(23),
-    --     R7dst_in(24), R0src_in(25), R1src_in(26), R2src_in(27), R3src_in(28), R4src_in(29), R5src_in(30), R6src_in(31),
-    --     R7src_in(32), PCin(33), IRin(34), Zin(35), (SRC)out(36), (DST)out(37), (Address)out(38), (Status)out(39), 
-    --     (SP)out(40), (Interrupt Address)out(41), R0dst_out(42), R1dst_out(43), R2dst_out(44), R3dst_out(45), R4dst_out(46), R5dst_out(47),
-    --     R6dst_out(48),R7dst_out(49), R0src_out(50), R1src_out(51), R2src_out(52), R3src_out(53), R4src_out(54), R5src_out(55), 
-    --     R6src_out(56), R7src_out(57), PCout(58), MDRout(59), Zout(60)
+    --     uBranch(0), WMFC(1), Carry(2-3), Clear_Y(4), Read(5), Write(6), ALU(7-10)
+    --     Yin(11), SRCin(12), DSTin(13), MARin(14), MDRin(15), (Status)in(16), SPin(17), 
+    --     R0dst_in(18), R1dst_in(19), R2dst_in(20), R3dst_in(21), R4dst_in(22), R5dst_in(23), R6dst_in(24),
+    --     R7dst_in(25), R0src_in(26), R1src_in(27), R2src_in(28), R3src_in(29), R4src_in(30), R5src_in(31), R6src_in(32),
+    --     R7src_in(33), PCin(34), IRin(35), Zin(36), (SRC)out(37), (DST)out(38), (Address)out(39), (Status)out(40), 
+    --     (SP)out(41), (Interrupt Address)out(42), R0dst_out(43), R1dst_out(44), R2dst_out(45), R3dst_out(46), R4dst_out(47), R5dst_out(48),
+    --     R6dst_out(49),R7dst_out(50), R0src_out(51), R1src_out(52), R3src_out(53), R3src_out(54), R4src_out(55), R5src_out(56), 
+    --     R6src_out(57), R7src_out(58), PCout(59), MDRout(60), Zout(61)
     -- )
     
     --Assigning outputs to controlsignals vector

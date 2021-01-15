@@ -18,14 +18,14 @@ CONSTANT ALU_SIZE : INTEGER := 16;
 CONSTANT FLAGS_COUNT: INTEGER := 3;
 CONSTANT COUNTER_SIZE: INTEGER := 16;
 CONSTANT PLA_LOAD_SIZE: INTEGER := 16;
-CONSTANT CTRL_WORD_SIZE: INTEGER := 21;
-CONSTANT CTRL_SIGNALS_SIZE: INTEGER := 61;
+CONSTANT CTRL_WORD_SIZE: INTEGER := 22;
+CONSTANT CTRL_SIGNALS_SIZE: INTEGER := 62;
 CONSTANT RAM_SIZE: INTEGER := 65536;
 CONSTANT RAM_WIDTH: INTEGER := 16;
 CONSTANT OFFSET_SIZE: INTEGER := 8;
+constant INTERRUPT_ADDRESS: std_logic_vector(REG_SIZE-1 downto 0) := x"0000";
 
 -- GENERAL PURPOSE REGISTERS
-
 TYPE Rx_port_type IS ARRAY(0 TO REG_COUNT-1) of std_logic_vector(REG_SIZE-1 DOWNTO 0);
 TYPE Rx_signal_type IS ARRAY(0 TO REG_COUNT-1) of std_logic;
 SIGNAL Rx_in: Rx_port_type;
@@ -72,6 +72,15 @@ SIGNAL IR_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
 SIGNAL IR_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
 SIGNAL IR_en: std_logic;
 SIGNAL IR_reset: std_logic;
+
+-- INTERRUPT ADDRESS REGISTER
+SIGNAL INTERRUPT_en: std_logic;
+SIGNAL INTERRUPT_reset: std_logic;
+SIGNAL INTERRUPT_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL INTERRUPT_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
+
+SIGNAL Tri_INTERRUPT_en: std_logic;
+SIGNAL Tri_INTERRUPT_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
 
 -- DONE: add address decoding circuit and connect it to bus
 SIGNAL IRoffset: std_logic_vector(REG_SIZE-1 DOWNTO 0);
@@ -205,6 +214,18 @@ INT_DST_in <= shared_bus;
 Tri_INTERMEDIATE_DST: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_INT_DST_en, INT_DST_out, Tri_INT_DST_out);
 shared_bus <= Tri_INT_DST_out;
 
+-- INTERRUPT ADDRESS REGSITER
+INTERRUPT_en <= '1';
+INTERRUPT_in <= INTERRUPT_ADDRESS;
+INTERRUPT_ADDRESS_REGISTER: entity work.nDFF(main) 
+  generic map(REG_SIZE) 
+  port map(clk, INTERRUPT_en, INTERRUPT_reset, INTERRUPT_in, INTERRUPT_out);
+
+shared_bus <= Tri_INTERRUPT_out;
+Tri_INTERRUPT_ADDRESS_REGISTER: entity work.nTristateBuffer(main)
+  generic map(REG_SIZE)
+  port map(Tri_INTERRUPT_en, INTERRUPT_out, Tri_INTERRUPT_out);
+
 -- STATUS
 -- DONE: need to handle status in signal
 STATUS_REGISTER: ENTITY work.n2DFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, Rstatus_reset, Rstatus_bus_en, Rstatus_bus_in, Rstatus_alu_en, Rstatus_alu_in, Rstatus_out);
@@ -212,24 +233,24 @@ Rstatus_bus_in <= shared_bus;
 -- Rstatus_alu_en <= not(ALU_F(3) AND ALU_F(2) AND ALU_F(1) AND ALU_F(0)); -- Rstatus_alu_en =  ALU_F!=1111
 Rstatus_alu_en <= '1' WHEN ( 
   (
-  unsigned(uPC_out) = 42 OR 
-  unsigned(uPC_out) = 45 OR 
-  unsigned(uPC_out) = 48 OR 
-  unsigned(uPC_out) = 51 OR 
-  unsigned(uPC_out) = 54 OR 
-  unsigned(uPC_out) = 57 OR 
-  unsigned(uPC_out) = 60 OR 
-  unsigned(uPC_out) = 63 OR 
-  unsigned(uPC_out) = 66 OR 
-  unsigned(uPC_out) = 68 OR 
-  unsigned(uPC_out) = 70 OR 
-  unsigned(uPC_out) = 72 OR 
-  unsigned(uPC_out) = 74 OR 
-  unsigned(uPC_out) = 76 OR 
-  unsigned(uPC_out) = 78 OR 
-  unsigned(uPC_out) = 80 OR 
-  unsigned(uPC_out) = 82 OR 
-  unsigned(uPC_out) = 84 
+    unsigned(uPC_out) = 42 OR 
+    unsigned(uPC_out) = 45 OR 
+    unsigned(uPC_out) = 48 OR 
+    unsigned(uPC_out) = 51 OR 
+    unsigned(uPC_out) = 54 OR 
+    unsigned(uPC_out) = 57 OR 
+    unsigned(uPC_out) = 60 OR 
+    unsigned(uPC_out) = 63 OR 
+    unsigned(uPC_out) = 66 OR 
+    unsigned(uPC_out) = 68 OR 
+    unsigned(uPC_out) = 70 OR 
+    unsigned(uPC_out) = 72 OR 
+    unsigned(uPC_out) = 74 OR 
+    unsigned(uPC_out) = 76 OR 
+    unsigned(uPC_out) = 78 OR 
+    unsigned(uPC_out) = 80 OR 
+    unsigned(uPC_out) = 82 OR 
+    unsigned(uPC_out) = 84 
   )
   AND 
   (
@@ -312,7 +333,7 @@ HALT_in <= "1";
 
 
 -- ROM
-ROM: ENTITY work.nmROM(main) PORT MAP(uPC_out, uIR_sig);
+ROM: ENTITY work.nmROM(main) generic map(256, CTRL_WORD_SIZE) PORT MAP(uPC_out, uIR_sig);
 
 -- CONTROL_WORD_DECODER
 CTRL_WORD_DECODER: ENTITY work.controlWordDecoder(main) PORT MAP(uIR_sig, IR_out, CTRL_SIGNALS);
@@ -320,45 +341,51 @@ CTRL_WORD_DECODER: ENTITY work.controlWordDecoder(main) PORT MAP(uIR_sig, IR_out
 -- DONE: Add Read and Write signals to RAM from CTRL_SIGNALS
 uPC_load <= CTRL_SIGNALS(0);
 WMFC <= CTRL_SIGNALS(1);
-ALU_Cin <= CTRL_SIGNALS(2);
-Ry_reset <= CTRL_SIGNALS(3);
-RAM_read <= CTRL_SIGNALS(4);
-RAM_write <= CTRL_SIGNALS(5);
-ALU_F <= CTRL_SIGNALS(9 DOWNTO 6);
-INT_DST_en <= CTRL_SIGNALS(12);
-INT_SRC_en <= CTRL_SIGNALS(11);
-Ry_en <= CTRL_SIGNALS(10);
-MAR_en <= CTRL_SIGNALS(13);
-MDR_bus_en <= CTRL_SIGNALS(14); -- DONE: make sure to edit this when MDR multiple inputs are handled
-Rstatus_bus_en <= CTRL_SIGNALS(15); -- DOBE: make sure to edit this when status multiple inputs are handled
 
-Rx_en(0) <= (CTRL_SIGNALS(17) OR CTRL_SIGNALS(25));
-Rx_en(1) <= (CTRL_SIGNALS(18) OR CTRL_SIGNALS(26));
-Rx_en(2) <= (CTRL_SIGNALS(19) OR CTRL_SIGNALS(27));
-Rx_en(3) <= (CTRL_SIGNALS(20) OR CTRL_SIGNALS(28));
-Rx_en(4) <= (CTRL_SIGNALS(21) OR CTRL_SIGNALS(29));
-Rx_en(5) <= (CTRL_SIGNALS(22) OR CTRL_SIGNALS(30));
-Rx_en(6) <= (CTRL_SIGNALS(23) OR CTRL_SIGNALS(31) OR CTRL_SIGNALS(16));
-Rx_en(7) <= (CTRL_SIGNALS(24) OR CTRL_SIGNALS(32) OR CTRL_SIGNALS(33));
+ALU_Cin <= Rstatus_out(1)     when CTRL_SIGNALS(3 downto 2) = "10" else
+           not Rstatus_out(1) when CTRL_SIGNALS(3 downto 2) = "11" else
+           CTRL_SIGNALS(2);
 
-IR_en <= CTRL_SIGNALS(34);
-Rz_en <= CTRL_SIGNALS(35);
-Tri_INT_SRC_en <= CTRL_SIGNALS(36);
-Tri_INT_DST_en <= CTRL_SIGNALS(37);
-Tri_IRoffset_en <= CTRL_SIGNALS(38);
-Tri_Rstatus_en <= CTRL_SIGNALS(39);
+Ry_reset <= CTRL_SIGNALS(4);
+RAM_read <= CTRL_SIGNALS(5);
+RAM_write <= CTRL_SIGNALS(6);
+ALU_F <= CTRL_SIGNALS(10 DOWNTO 7);
+INT_DST_en <= CTRL_SIGNALS(13);
+INT_SRC_en <= CTRL_SIGNALS(12);
+Ry_en <= CTRL_SIGNALS(11);
+MAR_en <= CTRL_SIGNALS(14);
+MDR_bus_en <= CTRL_SIGNALS(15); -- DONE: make sure to edit this when MDR multiple inputs are handled
+Rstatus_bus_en <= CTRL_SIGNALS(16); -- DOBE: make sure to edit this when status multiple inputs are handled
 
-Tri_Rx_en(0) <= (CTRL_SIGNALS(42) OR CTRL_SIGNALS(50));
-Tri_Rx_en(1) <= (CTRL_SIGNALS(43) OR CTRL_SIGNALS(51));
-Tri_Rx_en(2) <= (CTRL_SIGNALS(44) OR CTRL_SIGNALS(52));
-Tri_Rx_en(3) <= (CTRL_SIGNALS(45) OR CTRL_SIGNALS(53));
-Tri_Rx_en(4) <= (CTRL_SIGNALS(46) OR CTRL_SIGNALS(54));
-Tri_Rx_en(5) <= (CTRL_SIGNALS(47) OR CTRL_SIGNALS(55));
-Tri_Rx_en(6) <= (CTRL_SIGNALS(48) OR CTRL_SIGNALS(56) OR CTRL_SIGNALS(40));
-Tri_Rx_en(7) <= (CTRL_SIGNALS(49) OR CTRL_SIGNALS(57) OR CTRL_SIGNALS(58));
+Rx_en(0) <= (CTRL_SIGNALS(18) OR CTRL_SIGNALS(26));
+Rx_en(1) <= (CTRL_SIGNALS(19) OR CTRL_SIGNALS(27));
+Rx_en(2) <= (CTRL_SIGNALS(20) OR CTRL_SIGNALS(28));
+Rx_en(3) <= (CTRL_SIGNALS(21) OR CTRL_SIGNALS(29));
+Rx_en(4) <= (CTRL_SIGNALS(22) OR CTRL_SIGNALS(30));
+Rx_en(5) <= (CTRL_SIGNALS(23) OR CTRL_SIGNALS(31));
+Rx_en(6) <= (CTRL_SIGNALS(24) OR CTRL_SIGNALS(32) OR CTRL_SIGNALS(17));
+Rx_en(7) <= (CTRL_SIGNALS(25) OR CTRL_SIGNALS(33) OR CTRL_SIGNALS(34));
 
-Tri_MDR_en <= CTRL_SIGNALS(59);
-Tri_Rz_en <= CTRL_SIGNALS(60);
+IR_en <= CTRL_SIGNALS(35);
+Rz_en <= CTRL_SIGNALS(36);
+Tri_INT_SRC_en <= CTRL_SIGNALS(37);
+Tri_INT_DST_en <= CTRL_SIGNALS(38);
+Tri_IRoffset_en <= CTRL_SIGNALS(39);
+Tri_Rstatus_en <= CTRL_SIGNALS(40);
+
+Tri_INTERRUPT_en <= CTRL_SIGNALS(42);
+
+Tri_Rx_en(0) <= (CTRL_SIGNALS(43) OR CTRL_SIGNALS(51));
+Tri_Rx_en(1) <= (CTRL_SIGNALS(44) OR CTRL_SIGNALS(52));
+Tri_Rx_en(2) <= (CTRL_SIGNALS(45) OR CTRL_SIGNALS(53));
+Tri_Rx_en(3) <= (CTRL_SIGNALS(46) OR CTRL_SIGNALS(54));
+Tri_Rx_en(4) <= (CTRL_SIGNALS(47) OR CTRL_SIGNALS(55));
+Tri_Rx_en(5) <= (CTRL_SIGNALS(48) OR CTRL_SIGNALS(56));
+Tri_Rx_en(6) <= (CTRL_SIGNALS(49) OR CTRL_SIGNALS(57) OR CTRL_SIGNALS(41));
+Tri_Rx_en(7) <= (CTRL_SIGNALS(50) OR CTRL_SIGNALS(58) OR CTRL_SIGNALS(59));
+
+Tri_MDR_en <= CTRL_SIGNALS(60);
+Tri_Rz_en <= CTRL_SIGNALS(61);
 
 
 

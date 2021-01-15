@@ -401,6 +401,7 @@ force -freeze sim:/processor/MAR_reset 1 0
 force -freeze sim:/processor/IR_reset 1 0 
 force -freeze sim:/processor/INT_SRC_reset 1 0 
 force -freeze sim:/processor/INT_DST_reset 1 0 
+force -freeze sim:/processor/INTERRUPT_reset 1 0 
 force -freeze sim:/processor/HALT_reset 1 0 
 force -freeze sim:/processor/CTRL_COUNTER_reset 1 0 
 force -freeze sim:/processor/Rx_reset 11111111 0 
@@ -417,6 +418,7 @@ noforce sim:/processor/MAR_reset
 noforce sim:/processor/IR_reset 
 noforce sim:/processor/INT_SRC_reset 
 noforce sim:/processor/INT_DST_reset 
+noforce sim:/processor/INTERRUPT_reset 
 noforce sim:/processor/HALT_reset 
 noforce sim:/processor/CTRL_COUNTER_reset 
 noforce sim:/processor/Rx_reset 
