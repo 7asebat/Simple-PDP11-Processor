@@ -5,7 +5,6 @@ if len(sys.argv) != 2:
     sys.exit(1)
 
 with open(sys.argv[1]) as f:
-    HLTCalled = False
     curr_addr = 0
     for (index, line) in enumerate(f):
         # removing extra spaces
@@ -15,7 +14,7 @@ with open(sys.argv[1]) as f:
         if len(line) <= 1 or line.startswith(';'):  # NEED TO BE EDITED
             continue
 
-        # Update current address
+    # Update current address
         if '.=' in line:
             curr_addr = int(line.split('.=')[-1].strip())
             continue
@@ -28,9 +27,6 @@ with open(sys.argv[1]) as f:
         # Defining labels
         if ':' in line:
             define_label(line, labels, curr_addr)
-
-        if HLTCalled:
-            continue
 
         # Line sanity
         instruction = sanitize_line(line)
@@ -56,20 +52,17 @@ with open(sys.argv[1]) as f:
             curr_addr = process_one_op(instruction, bitString, Memory, curr_addr)
 
         elif instruction[0] in branch_instructions:
-            curr_addr = process_branch(instruction, bitString, Memory, curr_addr)
+            curr_addr = process_branch(instruction, bitString, Memory, curr_addr, index)
 
         elif instruction[0] in no_op_instructions:
-            curr_addr = process_no_op(instruction, bitString, Memory, curr_addr)
+            curr_addr = process_no_op(instruction, bitString, Memory, curr_addr, index)
 
         elif instruction[0] in jsr_instructions:
-            curr_addr = process_jsr(instruction, bitString, Memory, curr_addr)
+            curr_addr = process_jsr(instruction, bitString, Memory, curr_addr, index)
 
         else:
             print('Invalid instruction: syntax error in line', index + 1)
             sys.exit(1)
-
-        if instruction[0] == 'HLT':
-            HLTCalled = True
 
         curr_addr += 1
 
@@ -96,4 +89,4 @@ with open(f'{fn}.mem', 'w') as f:
             f.write(f'\n{v[0]:x}: ')
         f.write('{val} '.format(val=v[1]))
 
-writeDoFile(fn,f'mem load -i ./{fn}.mem /processor/RAM/ram')
+writeDoFile(fn, f'mem load -i ./{fn}.mem /processor/RAM/ram')

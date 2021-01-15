@@ -223,13 +223,13 @@ def sanitize_line(line):
 def sanitize_label(key, value, labels, Memory):
     if re.search(r"\{\w+\}", value):
         label = re.search(r"\{(\w+)\}", value).group(1)
-        if(re.match('^\{', value)):
+        if re.match('^\{', value):
             address = f"{labels[label]:016b}"
             newValue = value.replace('{' + label + '}', address)
         else:
             offset = labels[label] - (key + 1)
             if not -128 <= offset <= 127:
-                print('Offset out of range in line', index + 1)
+                print('Offset out of range for label {label}')
                 sys.exit(1)
             newValue = value.replace('{' + label + '}', '000' + f"{offset & 0xFF:08b}")
         # Updating Memory Value
@@ -274,7 +274,7 @@ def process_one_op(instruction, bitString, Memory, curr_addr):
     return curr_addr
 
 
-def process_branch(instruction, bitString, Memory, curr_addr):
+def process_branch(instruction, bitString, Memory, curr_addr, index):
     if len(instruction) > 2:
         print('Branch instruction expects a label only, in line', index + 1)
         sys.exit(1)
@@ -298,7 +298,7 @@ def process_branch(instruction, bitString, Memory, curr_addr):
     return curr_addr
 
 
-def process_no_op(instruction, bitString, Memory, curr_addr):
+def process_no_op(instruction, bitString, Memory, curr_addr, index):
     if len(instruction) > 1:
         print('no-operand instruction', instruction[0],
               'expects no operands, in line', index + 1)
@@ -310,7 +310,7 @@ def process_no_op(instruction, bitString, Memory, curr_addr):
     return curr_addr
 
 
-def process_jsr(instruction, bitString, Memory, curr_addr):
+def process_jsr(instruction, bitString, Memory, curr_addr, index):
     if instruction[0] == 'JSR':
         if len(instruction) > 2:
             print('JSR instruction expects a label only, in line', index + 1)
@@ -349,39 +349,39 @@ add wave -dec -position insertpoint \
 sim:/processor/Rx_out(7) \
 sim:/processor/CTRL_COUNTER_out \
 sim:/processor/uPC_out \
--hex \
-sim:/processor/WMFC \
-sim:/processor/MFC \
-sim:/processor/RUN \
-sim:/processor/clk \
 \
-sim:/processor/MIU_read \
-sim:/processor/MIU_write \
-sim:/processor/MIU_mem_write \
-sim:/processor/MIU_mem_read \
-\
--dec sim:/processor/MDR_out \
+-dec \
+sim:/processor/MDR_out \
 sim:/processor/MAR_out \
 \
 -bin \
-sim:/processor/ALU_flags \
-sim:/processor/ALU_F \
-sim:/processor/ALU_Cin \
-\
--hex \
-sim:/processor/shared_bus \
+{{sim:/processor/Rstatus_out[2:0]}} \
 \
 -dec \
 sim:/processor/Rx_out \
-sim:/processor/INT_SRC_out \
-sim:/processor/INT_DST_out \
-sim:/processor/Rstatus_out \
 
+# bin \
+# sim:/processor/ALU_flags \
+# sim:/processor/ALU_F \
+# sim:/processor/ALU_Cin \
+
+# -dec \
+# sim:/processor/INT_SRC_out \
+# sim:/processor/INT_DST_out \
 
 # -hex \
 # sim:/processor/CTRL_SIGNALS \
 # sim:/processor/uIR_sig \
 # sim:/processor/IR_out \
+# sim:/processor/shared_bus \
+# sim:/processor/WMFC \
+# sim:/processor/MFC \
+# sim:/processor/RUN \
+# sim:/processor/clk \
+# sim:/processor/MIU_read \
+# sim:/processor/MIU_write \
+# sim:/processor/MIU_mem_write \
+# sim:/processor/MIU_mem_read \
 
 # sim:/processor/MDR_REGISTER/A_en \
 # sim:/processor/MDR_REGISTER/A_in \
