@@ -6,7 +6,7 @@
 |-------------------|--------|--------|
 | Ahmed Nasser      | 1 |  8  | 
 | Ahmed Hesham Eid  | 1 |  9  | 
-| Abdelrahman Farid | 1 |  34 | 
+| Abdelrahman Ahmed Mohamed Farid | 1 |  34 | 
 | Youssef Walid     | 2 |  34 | 
 
 ## Changes from Phase 1 design
