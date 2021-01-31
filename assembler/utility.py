@@ -140,8 +140,8 @@ def get_addressing_mode(op, curr_addr):
             + register_opcodes[register]
         tempBitString[1] = f"{int(op[1:].split('(')[0]):016b}"
 
-    elif re.match(r"^\#\d+$", op):
-        value = int(re.search(r"\d+", op).group(0))
+    elif re.match(r"^\#\d+.*$", op):
+        value = int(re.search(r"\d+.*", op).group(0), 0)
         tempBitString[0] += addressing_mode_opcodes['auto_increment'] \
             + register_opcodes['R7']
         tempBitString[1] = f"{value:016b}"
@@ -156,10 +156,26 @@ def get_addressing_mode(op, curr_addr):
             tempBitString[1] += f"{offset & 0xFFFF:016b}"
 
         else:
-            address = '[' + variable + ']'
+            address = f'[{variable}]'
             tempBitString[0] += addressing_mode_opcodes['indexed'] \
                 + register_opcodes['R7']
             tempBitString[1] = address
+
+    # Load address of variable
+    elif re.match(r'^\#[A-Z]+$', op):
+        variable = op[1:]
+        if variable in variables:
+            address = variables[variable]['address']
+            tempBitString[0] += addressing_mode_opcodes['auto_increment'] \
+                + register_opcodes['R7']
+            tempBitString[1] += f"{address:016b}"
+
+        else:
+            address = f'<{variable}>'
+            tempBitString[0] += addressing_mode_opcodes['auto_increment'] \
+                + register_opcodes['R7']
+            tempBitString[1] = address
+
     else:
         print('Error in parsing addressing mode')
         sys.exit(1)
@@ -170,7 +186,6 @@ def get_addressing_mode(op, curr_addr):
 def handle_two_op_instruction(op1, op2, curr_addr):
     firstOpBits = get_addressing_mode(op1, curr_addr)
     secondOpBits = get_addressing_mode(op2, curr_addr)
-    operandsBitString = firstOpBits[0] + secondOpBits[0]
     returnedBitArr = [firstOpBits[0] + secondOpBits[0], firstOpBits[1], secondOpBits[1]]
     return returnedBitArr
 
@@ -192,16 +207,23 @@ def build_lookup_table(filePath):
     return table
 
 
-def define_variable(line, variables, Memory, curr_addr):
+def define_variable(line: str, variables, Memory, curr_addr):
     variable = line.split(' ')
     variable = list(filter(lambda x: bool(x), variable))
+
+    dirtyValues = variable[2:]
+    dirtyValues = list(map(lambda x: ' '.join(x.split(',')), dirtyValues))
+    values = []
+    for dv in dirtyValues:
+        values.extend([int(x, 0) for x in dv.split()])
+
     variables[variable[1]] = {
         'address': curr_addr,
-        'values': list(map(int, variable[2].split(',')))
+        'values': values
     }
 
     for value in variables[variable[1]]['values']:
-        Memory[curr_addr] = f"{int(value) & 0xFFFF:016b}"
+        Memory[curr_addr] = f"{value & 0xFFFF:016b}"
         curr_addr += 1
 
     return curr_addr
@@ -223,7 +245,7 @@ def sanitize_line(line):
 def sanitize_label(key, value, labels, Memory):
     if re.search(r"\{\w+\}", value):
         label = re.search(r"\{(\w+)\}", value).group(1)
-        if re.match('^\{', value):
+        if re.match(r"^\{", value):
             address = f"{labels[label]:016b}"
             newValue = value.replace('{' + label + '}', address)
         else:
@@ -242,6 +264,11 @@ def sanitize_variable(key, value, variables, Memory):
         print(var)
         offset = variables[var]['address'] - (key + 1)
         Memory[key] = f"{offset & 0xFFFF:016b}"
+
+    elif re.search(r'\<\w+\>', value):
+        var = re.search(r"\<(\w+)\>", value).group(1)
+        print(f'#{var}')
+        Memory[key] = f'{variables[var]["address"] & 0xFFFF:016b}'
 
 
 def process_two_op(instruction, bitString, Memory, curr_addr):
@@ -390,39 +417,39 @@ sim:/processor/Rx_out \
 # sim:/processor/RAM/dataIn \
 # sim:/processor/RAM/dataOut \
 
-force -freeze sim:/processor/clk 1 0 
-force -freeze sim:/processor/uPC_reset 1 0 
-force -freeze sim:/processor/MIU_reset 1 0 
-force -freeze sim:/processor/Rz_reset 1 0 
-force -freeze sim:/processor/Ry_reset 1 0 
-force -freeze sim:/processor/Rstatus_reset 1 0 
-force -freeze sim:/processor/MDR_reset 1 0 
-force -freeze sim:/processor/MAR_reset 1 0 
-force -freeze sim:/processor/IR_reset 1 0 
-force -freeze sim:/processor/INT_SRC_reset 1 0 
-force -freeze sim:/processor/INT_DST_reset 1 0 
-force -freeze sim:/processor/INTERRUPT_reset 1 0 
-force -freeze sim:/processor/HALT_reset 1 0 
-force -freeze sim:/processor/CTRL_COUNTER_reset 1 0 
-force -freeze sim:/processor/Rx_reset 11111111 0 
-run 
+force -freeze sim:/processor/clk 1 0
+force -freeze sim:/processor/uPC_reset 1 0
+force -freeze sim:/processor/MIU_reset 1 0
+force -freeze sim:/processor/Rz_reset 1 0
+force -freeze sim:/processor/Ry_reset 1 0
+force -freeze sim:/processor/Rstatus_reset 1 0
+force -freeze sim:/processor/MDR_reset 1 0
+force -freeze sim:/processor/MAR_reset 1 0
+force -freeze sim:/processor/IR_reset 1 0
+force -freeze sim:/processor/INT_SRC_reset 1 0
+force -freeze sim:/processor/INT_DST_reset 1 0
+force -freeze sim:/processor/INTERRUPT_reset 1 0
+force -freeze sim:/processor/HALT_reset 1 0
+force -freeze sim:/processor/CTRL_COUNTER_reset 1 0
+force -freeze sim:/processor/Rx_reset 11111111 0
+run
 
-noforce sim:/processor/uPC_reset 
-noforce sim:/processor/MIU_reset 
-noforce sim:/processor/Rz_reset 
-noforce sim:/processor/Ry_reset 
-noforce sim:/processor/Rx_reset 
-noforce sim:/processor/Rstatus_reset 
-noforce sim:/processor/MDR_reset 
-noforce sim:/processor/MAR_reset 
-noforce sim:/processor/IR_reset 
-noforce sim:/processor/INT_SRC_reset 
-noforce sim:/processor/INT_DST_reset 
-noforce sim:/processor/INTERRUPT_reset 
-noforce sim:/processor/HALT_reset 
-noforce sim:/processor/CTRL_COUNTER_reset 
-noforce sim:/processor/Rx_reset 
-force -freeze sim:/processor/clk 1 0, 0 {{50 ps}} -r 100 
+noforce sim:/processor/uPC_reset
+noforce sim:/processor/MIU_reset
+noforce sim:/processor/Rz_reset
+noforce sim:/processor/Ry_reset
+noforce sim:/processor/Rx_reset
+noforce sim:/processor/Rstatus_reset
+noforce sim:/processor/MDR_reset
+noforce sim:/processor/MAR_reset
+noforce sim:/processor/IR_reset
+noforce sim:/processor/INT_SRC_reset
+noforce sim:/processor/INT_DST_reset
+noforce sim:/processor/INTERRUPT_reset
+noforce sim:/processor/HALT_reset
+noforce sim:/processor/CTRL_COUNTER_reset
+noforce sim:/processor/Rx_reset
+force -freeze sim:/processor/clk 1 0, 0 {{50 ps}} -r 100
 
-run 100ns;
+run 16ns;
 ''')

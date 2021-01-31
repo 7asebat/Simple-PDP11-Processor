@@ -9,142 +9,138 @@ END ENTITY;
 ARCHITECTURE main OF PROCESSOR IS
 
 -- CONSTANTS
-
-CONSTANT BUS_SIZE: INTEGER := 16;
-CONSTANT REG_SIZE: INTEGER := 16;
-CONSTANT REG_COUNT: INTEGER := 8;
-CONSTANT ALU_F_SIZE: INTEGER := 4;
-CONSTANT ALU_SIZE : INTEGER := 16;
-CONSTANT FLAGS_COUNT: INTEGER := 3;
-CONSTANT COUNTER_SIZE: INTEGER := 16;
-CONSTANT PLA_LOAD_SIZE: INTEGER := 16;
-CONSTANT CTRL_WORD_SIZE: INTEGER := 22;
+CONSTANT BUS_SIZE:          INTEGER := 16;
+CONSTANT REG_SIZE:          INTEGER := 16;
+CONSTANT REG_COUNT:         INTEGER := 8;
+CONSTANT ALU_F_SIZE:        INTEGER := 4;
+CONSTANT ALU_SIZE:          INTEGER := 16;
+CONSTANT FLAGS_COUNT:       INTEGER := 3;
+CONSTANT COUNTER_SIZE:      INTEGER := 16;
+CONSTANT PLA_LOAD_SIZE:     INTEGER := 16;
+CONSTANT CTRL_WORD_SIZE:    INTEGER := 22;
 CONSTANT CTRL_SIGNALS_SIZE: INTEGER := 62;
-CONSTANT RAM_SIZE: INTEGER := 65536;
-CONSTANT RAM_WIDTH: INTEGER := 16;
-CONSTANT OFFSET_SIZE: INTEGER := 8;
-constant INTERRUPT_ADDRESS: std_logic_vector(REG_SIZE-1 downto 0) := x"0000";
+CONSTANT RAM_SIZE:          INTEGER := 65536;
+CONSTANT RAM_WIDTH:         INTEGER := 16;
+CONSTANT OFFSET_SIZE:       INTEGER := 8;
 
 -- GENERAL PURPOSE REGISTERS
 TYPE Rx_port_type IS ARRAY(0 TO REG_COUNT-1) of std_logic_vector(REG_SIZE-1 DOWNTO 0);
 TYPE Rx_signal_type IS ARRAY(0 TO REG_COUNT-1) of std_logic;
-SIGNAL Rx_in: Rx_port_type;
-SIGNAL Rx_out: Rx_port_type;
-SIGNAL Rx_en: Rx_signal_type;
+SIGNAL Rx_in:    Rx_port_type;
+SIGNAL Rx_out:   Rx_port_type;
+SIGNAL Rx_en:    Rx_signal_type;
 SIGNAL Rx_reset: Rx_signal_type;
 
 TYPE Tri_Rx_signal_type IS ARRAY(0 TO REG_COUNT-1) of std_logic;
-SIGNAL Tri_Rx_en:  Tri_Rx_signal_type;
+SIGNAL Tri_Rx_en: Tri_Rx_signal_type;
 
 TYPE Tri_Rx_port_type IS ARRAY(0 TO REG_COUNT-1) of std_logic_vector(REG_SIZE-1 DOWNTO 0);
 SIGNAL Tri_Rx_out: Tri_Rx_port_type;
 
 -- INTERMEDIATE REGISTERS
-SIGNAL INT_SRC_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL INT_SRC_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL INT_SRC_en: std_logic;
+SIGNAL INT_SRC_in:    std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL INT_SRC_out:   std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL INT_SRC_en:    std_logic;
 SIGNAL INT_SRC_reset: std_logic;
 
-SIGNAL Tri_INT_SRC_en: std_logic;
+SIGNAL Tri_INT_SRC_en:  std_logic;
 SIGNAL Tri_INT_SRC_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
 
-SIGNAL INT_DST_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL INT_DST_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL INT_DST_en: std_logic;
+SIGNAL INT_DST_in:    std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL INT_DST_out:   std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL INT_DST_en:    std_logic;
 SIGNAL INT_DST_reset: std_logic;
 
-SIGNAL Tri_INT_DST_en: std_logic;
+SIGNAL Tri_INT_DST_en:  std_logic;
 SIGNAL Tri_INT_DST_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
 
 -- STATUS REGISTER
 SIGNAL Rstatus_bus_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
 SIGNAL Rstatus_alu_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL Rstatus_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL Rstatus_out:    std_logic_vector(REG_SIZE-1 DOWNTO 0);
 SIGNAL Rstatus_bus_en: std_logic;
 SIGNAL Rstatus_alu_en: std_logic;
-SIGNAL Rstatus_reset: std_logic;
+SIGNAL Rstatus_reset:  std_logic;
 
-SIGNAL Tri_Rstatus_en: std_logic;
+SIGNAL Tri_Rstatus_en:  std_logic;
 SIGNAL Tri_Rstatus_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
 
 -- INSTRUCTION REGISTER
-SIGNAL IR_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL IR_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL IR_en: std_logic;
+SIGNAL IR_in:    std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL IR_out:   std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL IR_en:    std_logic;
 SIGNAL IR_reset: std_logic;
 
--- INTERRUPT ADDRESS REGISTER
-SIGNAL INTERRUPT_en: std_logic;
+-- INTERRUPT REGISTER, ADDRESS
+SIGNAL INTERRUPT_in:    std_logic_vector(0 downto 0) := "0";
 SIGNAL INTERRUPT_reset: std_logic;
-SIGNAL INTERRUPT_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL INTERRUPT_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL INTERRUPT_en:    std_logic;
+SIGNAL INTERRUPT_out:   std_logic_vector(0 downto 0);
 
-SIGNAL Tri_INTERRUPT_en: std_logic;
-SIGNAL Tri_INTERRUPT_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL INTERRUPT_ADR:         std_logic_vector(REG_SIZE-1 downto 0):= (OTHERS => '0');
+SIGNAL Tri_INTERRUPT_ADR_en:  std_logic;
+SIGNAL Tri_INTERRUPT_ADR_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
 
 -- DONE: add address decoding circuit and connect it to bus
-SIGNAL IRoffset: std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL IRoffset:         std_logic_vector(REG_SIZE-1 DOWNTO 0);
 SIGNAL Tri_IRoffset_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL Tri_IRoffset_en: std_logic;
+SIGNAL Tri_IRoffset_en:  std_logic;
 
 -- ALU REGISTERS
-SIGNAL Ry_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL Ry_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL Ry_en: std_logic;
+SIGNAL Ry_in:    std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL Ry_out:   std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL Ry_en:    std_logic;
 SIGNAL Ry_reset: std_logic;
 
-SIGNAL Rz_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL Rz_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL Rz_en: std_logic;
+SIGNAL Rz_in:    std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL Rz_out:   std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL Rz_en:    std_logic;
 SIGNAL Rz_reset: std_logic;
 
-SIGNAL Tri_Rz_en: std_logic;
+SIGNAL Tri_Rz_en:  std_logic;
 SIGNAL Tri_Rz_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
 
 -- ALU
-
-SIGNAL ALU_F: std_logic_vector(ALU_F_SIZE-1 DOWNTO 0);
-SIGNAL ALU_Cin: std_logic;
+SIGNAL ALU_F:     std_logic_vector(ALU_F_SIZE-1 DOWNTO 0);
+SIGNAL ALU_Cin:   std_logic;
 SIGNAL ALU_flags: std_logic_vector(FLAGS_COUNT-1 DOWNTO 0);
 
 -- MEMORY REGISTERS
 SIGNAL MDR_bus_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
 SIGNAL MDR_ram_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL MDR_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL MDR_out:    std_logic_vector(REG_SIZE-1 DOWNTO 0);
 SIGNAL MDR_bus_en: std_logic;
 SIGNAL MDR_ram_en: std_logic;
-SIGNAL MDR_reset: std_logic;
+SIGNAL MDR_reset:  std_logic;
 
-SIGNAL Tri_MDR_en: std_logic;
+SIGNAL Tri_MDR_en:  std_logic;
 SIGNAL Tri_MDR_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
 
-SIGNAL MAR_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL MAR_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL MAR_en: std_logic;
+SIGNAL MAR_in:    std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL MAR_out:   std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL MAR_en:    std_logic;
 SIGNAL MAR_reset: std_logic;
 
 -- CONTROL STEP COUNTER
-
-SIGNAL CTRL_COUNTER_en: std_logic;
+SIGNAL CTRL_COUNTER_en:    std_logic;
 SIGNAL CTRL_COUNTER_reset: std_logic;
-SIGNAL CTRL_COUNTER_mode: std_logic;
-SIGNAL CTRL_COUNTER_load: std_logic;
-SIGNAL CTRL_COUNTER_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL CTRL_COUNTER_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL CTRL_COUNTER_mode:  std_logic;
+SIGNAL CTRL_COUNTER_load:  std_logic;
+SIGNAL CTRL_COUNTER_in:    std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL CTRL_COUNTER_out:   std_logic_vector(REG_SIZE-1 DOWNTO 0);
 
 -- uPC
-
-SIGNAL uPC_en: std_logic;
+SIGNAL uPC_en:    std_logic;
 SIGNAL uPC_reset: std_logic;
-SIGNAL uPC_mode: std_logic;
-SIGNAL uPC_load: std_logic;
-SIGNAL uPC_in: std_logic_vector(REG_SIZE-1 DOWNTO 0);
-SIGNAL uPC_out: std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL uPC_mode:  std_logic;
+SIGNAL uPC_load:  std_logic;
+SIGNAL uPC_in:    std_logic_vector(REG_SIZE-1 DOWNTO 0);
+SIGNAL uPC_out:   std_logic_vector(REG_SIZE-1 DOWNTO 0);
 
 -- HALT
-SIGNAL HALT_in: std_logic_vector(0 DOWNTO 0);
-SIGNAL HALT_out: std_logic_vector(0 DOWNTO 0);
-SIGNAL HALT_en: std_logic;
+SIGNAL HALT_in:    std_logic_vector(0 DOWNTO 0);
+SIGNAL HALT_out:   std_logic_vector(0 DOWNTO 0);
+SIGNAL HALT_en:    std_logic;
 SIGNAL HALT_reset: std_logic;
 
 -- RAM
@@ -158,14 +154,14 @@ SIGNAL uIR_sig: std_logic_vector(CTRL_WORD_SIZE-1 DOWNTO 0);
 SIGNAL CTRL_SIGNALS: std_logic_vector(CTRL_SIGNALS_SIZE-1 DOWNTO 0);
 
 -- MIU
-SIGNAL MIU_reset: std_logic;
-SIGNAL MIU_read: std_logic;
-SIGNAL MIU_write: std_logic;
-SIGNAL MIU_mfc: std_logic;
-SIGNAL MIU_wmfc: std_logic;
-SIGNAL MIU_mem_read: std_logic;
+SIGNAL MIU_reset:     std_logic;
+SIGNAL MIU_read:      std_logic;
+SIGNAL MIU_write:     std_logic;
+SIGNAL MIU_mfc:       std_logic;
+SIGNAL MIU_wmfc:      std_logic;
+SIGNAL MIU_mem_read:  std_logic;
 SIGNAL MIU_mem_write: std_logic;
-SIGNAL MIU_run: std_logic;
+SIGNAL MIU_run:       std_logic;
 
 -- WMFC
 SIGNAL WMFC: std_logic;
@@ -185,14 +181,12 @@ SIGNAL shared_bus : std_logic_vector(BUS_SIZE-1 DOWNTO 0);
 
 -- GLOBAL RESET
 SIGNAL reset_all: std_logic;
--- TODO: wassal el reset_all
+-- TODO: Connect reset_all
 
 BEGIN
-
 inv_clk <= not(clk);
 
 -- REGISTERS
-
 -- GENERAL PURPOSE
 generate_Rx: FOR i IN 0 TO 7 GENERATE
   Rx: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP (clk, Rx_en(i), Rx_reset(i), Rx_in(i), Rx_out(i));
@@ -213,18 +207,6 @@ INTERMEDIATE_DST: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, INT
 INT_DST_in <= shared_bus;
 Tri_INTERMEDIATE_DST: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_INT_DST_en, INT_DST_out, Tri_INT_DST_out);
 shared_bus <= Tri_INT_DST_out;
-
--- INTERRUPT ADDRESS REGSITER
-INTERRUPT_en <= '1';
-INTERRUPT_in <= INTERRUPT_ADDRESS;
-INTERRUPT_ADDRESS_REGISTER: entity work.nDFF(main) 
-  generic map(REG_SIZE) 
-  port map(clk, INTERRUPT_en, INTERRUPT_reset, INTERRUPT_in, INTERRUPT_out);
-
-shared_bus <= Tri_INTERRUPT_out;
-Tri_INTERRUPT_ADDRESS_REGISTER: entity work.nTristateBuffer(main)
-  generic map(REG_SIZE)
-  port map(Tri_INTERRUPT_en, INTERRUPT_out, Tri_INTERRUPT_out);
 
 -- STATUS
 -- DONE: need to handle status in signal
@@ -268,15 +250,17 @@ shared_bus <= Tri_Rstatus_out;
 IR: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, IR_en, IR_reset, IR_in, IR_out); 
 IR_in <= shared_bus;
 
--- IR decoding circuit
-IRoffset <= "00000000" & IR_out(OFFSET_SIZE-1 DOWNTO 0);
+-- IR offset decoding circuit
+IR_OFFSET_DECODER: ENTITY work.OffsetDecoder(main)
+  generic map(OFFSET_SIZE, REG_SIZE)
+  port map(IR_out(OFFSET_SIZE-1 DOWNTO 0), IRoffset);
+
 Tri_IRoffset: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP(Tri_IRoffset_en, IRoffset, Tri_IRoffset_out);
 shared_bus <= Tri_IRoffset_out;
 
 -- ALU REGISTERS
 ALU_Y_REGISTER: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, Ry_en, Ry_reset, Ry_in, Ry_out);
 Ry_in <= shared_bus;
-
 
 ALU_Z_REGISTER: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, Rz_en, Rz_reset, Rz_in, Rz_out); 
 Tri_Rz: ENTITY work.nTristateBuffer(main) GENERIC MAP(REG_SIZE) PORT MAP (Tri_Rz_en, Rz_out, Tri_Rz_out);
@@ -286,7 +270,6 @@ shared_bus <= Tri_Rz_out;
 ALU: ENTITY work.ALU(main) GENERIC MAP(ALU_SIZE) PORT MAP(shared_bus, Ry_out, ALU_F, ALU_Cin, Rz_in, ALU_flags);
 
 -- RAM MEMORY
-
 RAM: ENTITY work.nmRam(main) GENERIC MAP(RAM_SIZE, RAM_WIDTH) PORT MAP(inv_clk, MIU_mfc, MIU_mem_read, MIU_mem_write, MAR_out, MDR_out, MDR_ram_in);
 
 -- MEMORY REGISTERS
@@ -301,16 +284,29 @@ shared_bus <= Tri_MDR_out;
 MAR_REGISTER: ENTITY work.nDFF(main) GENERIC MAP(REG_SIZE) PORT MAP(clk, MAR_en, MAR_reset, MAR_in, MAR_out);
 MAR_in <= shared_bus;
 
--- TODO: ADD Interrupt Address Logic Circuit
-
 -- CONTROL STEP COUNTER
 CONTROL_STEP_COUNTER: ENTITY work.nCounter(main) GENERIC MAP(COUNTER_SIZE) PORT MAP(clk, CTRL_COUNTER_en, CTRL_COUNTER_mode, CTRL_COUNTER_reset, CTRL_COUNTER_load, CTRL_COUNTER_in, CTRL_COUNTER_out);
 CTRL_COUNTER_mode <= '0';
 CTRL_COUNTER_en <= (RUN AND (not (HALT_out(0))));
 CTRL_COUNTER_reset <= '1' WHEN (uPc_in = X"0000" AND uPC_load = '1') ELSE '0';
 
+-- INTERRUPT SIGNAL REGISTER
+-- INTERRUPT_in <= '0'; Set this signal externally
+INTERRUPT_en <= '1';
+INTERRUPT_REGISTER: entity work.nDFF(main) 
+  generic map(1) 
+  port map(clk, INTERRUPT_en, INTERRUPT_reset, INTERRUPT_in, INTERRUPT_out);
+
+-- INTERRUPT ADDRESS
+-- Just a signal which contains the initial interrupt address
+-- Modify INTERRUPT_ADR externally
+Tri_INTERRUPT_ADDRESS: entity work.nTristateBuffer(main)
+  generic map(REG_SIZE)
+  port map(Tri_INTERRUPT_ADR_en, INTERRUPT_ADR, Tri_INTERRUPT_ADR_out);
+shared_bus <= Tri_INTERRUPT_ADR_out;
+
 -- PLA
-PLA: ENTITY work.PLA(main) GENERIC MAP(REG_SIZE, COUNTER_SIZE) PORT MAP(IR_out, CTRL_COUNTER_out, Rstatus_out, uPC_in, HALT_en);
+PLA: ENTITY work.PLA(main) GENERIC MAP(REG_SIZE, COUNTER_SIZE) PORT MAP(IR_out, CTRL_COUNTER_out, Rstatus_out, INTERRUPT_out(0), uPC_in, HALT_en);
 
 -- uPC
 uPC: ENTITY work.nCounter(main) GENERIC MAP(COUNTER_SIZE) PORT MAP(clk, uPC_en, uPC_mode, uPC_reset, uPC_load, uPC_in, uPC_out);
@@ -330,7 +326,6 @@ MIU_write <= RAM_write;
 -- HALT
 HALT_REG: ENTITY work.nDFF(main) GENERIC MAP(1) PORT MAP(clk, HALT_en, HALT_reset, HALT_in, HALT_out);
 HALT_in <= "1";
-
 
 -- ROM
 ROM: ENTITY work.nmROM(main) generic map(256, CTRL_WORD_SIZE) PORT MAP(uPC_out, uIR_sig);
@@ -355,7 +350,7 @@ INT_SRC_en <= CTRL_SIGNALS(12);
 Ry_en <= CTRL_SIGNALS(11);
 MAR_en <= CTRL_SIGNALS(14);
 MDR_bus_en <= CTRL_SIGNALS(15); -- DONE: make sure to edit this when MDR multiple inputs are handled
-Rstatus_bus_en <= CTRL_SIGNALS(16); -- DOBE: make sure to edit this when status multiple inputs are handled
+Rstatus_bus_en <= CTRL_SIGNALS(16); -- DONE: make sure to edit this when status multiple inputs are handled
 
 Rx_en(0) <= (CTRL_SIGNALS(18) OR CTRL_SIGNALS(26));
 Rx_en(1) <= (CTRL_SIGNALS(19) OR CTRL_SIGNALS(27));
@@ -373,7 +368,7 @@ Tri_INT_DST_en <= CTRL_SIGNALS(38);
 Tri_IRoffset_en <= CTRL_SIGNALS(39);
 Tri_Rstatus_en <= CTRL_SIGNALS(40);
 
-Tri_INTERRUPT_en <= CTRL_SIGNALS(42);
+Tri_INTERRUPT_ADR_en <= CTRL_SIGNALS(42);
 
 Tri_Rx_en(0) <= (CTRL_SIGNALS(43) OR CTRL_SIGNALS(51));
 Tri_Rx_en(1) <= (CTRL_SIGNALS(44) OR CTRL_SIGNALS(52));

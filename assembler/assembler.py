@@ -1,6 +1,6 @@
 from utility import *
 
-if len(sys.argv) != 2:
+if len(sys.argv) < 2:
     print('Invalid arguments')
     sys.exit(1)
 
@@ -9,6 +9,8 @@ with open(sys.argv[1]) as f:
     for (index, line) in enumerate(f):
         # removing extra spaces
         line = line.rstrip().strip().upper()
+        if line.find(';') > -1:
+            line = line[:line.find(';')]
 
         # Check: if empty line ignore
         if len(line) <= 1 or line.startswith(';'):  # NEED TO BE EDITED
@@ -89,4 +91,5 @@ with open(f'{fn}.mem', 'w') as f:
             f.write(f'\n{v[0]:x}: ')
         f.write('{val} '.format(val=v[1]))
 
-writeDoFile(fn, f'mem load -i ./{fn}.mem /processor/RAM/ram')
+if len(sys.argv) == 2:
+    writeDoFile(fn, f'mem load -i ./{fn}.mem /processor/RAM/ram')

@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 entity PLA is
   generic(n: integer := 16; m: integer:= 8);
   port(IR, controlStepCounter, statusRegister: in std_logic_vector(n-1 downto 0);
+       interrupt: in std_logic;
        load: out std_logic_vector(m-1 downto 0);
        halt: out std_logic);
 end entity PLA;
@@ -76,7 +77,6 @@ architecture main of PLA is
   constant ADR_INDEXED: std_logic_vector(2 DOWNTO 0)                 := "110";
   constant ADR_INDEXED_INDIRECT: std_logic_vector(2 DOWNTO 0)        := "111";
 
-
   -- Control Step Positions
   constant CONTROL_END:                      INTEGER := 0;
   constant CONTROL_SOURCE_DIRECT_REGISTER:   INTEGER := 4;
@@ -140,9 +140,29 @@ begin
 
   PROCESS (IR, controlStepCounter)
     variable controlStep: integer;
+    variable handlingInterrupt: std_logic := '0';
 
   BEGIN
     controlStep := to_integer(signed(controlStepCounter));
+
+    -- Handle interrupts only at the start of a new instruction
+    if controlStep = 0 then
+      handlingInterrupt := interrupt;
+    end if;
+
+    if handlingInterrupt = '1' THEN
+      case controlStep is
+        when 0 =>
+          load <= std_logic_vector(to_unsigned(CONTROL_INTERRUPT, load'length)); -- row 109 (INTERRUPT)
+        when 2 =>
+          load <= std_logic_vector(to_unsigned(CONTROL_PUSH, load'length)); -- row 124 (PUSH)
+        when 5 =>
+          load <= std_logic_vector(to_unsigned(CONTROL_INTERRUPT_AFTER_PUSH, load'length)); -- row 111 (INTERRUPT AFTER PUSH)
+        when 10 =>
+          load <= std_logic_vector(to_unsigned(CONTROL_END, load'length)); -- END
+        when others => null;
+      end case;
+    else
     -- one op instruction
     IF IR_opcode = OPCODE_ONE_OP THEN
       -- STEP ONE: FETCH DESTINATION
@@ -317,13 +337,13 @@ begin
         end case;
 
       when 6 => -- 88: µ-PC <= PLA(IR)$ [Double Operand]::ADD SRC, DST
-        load <= std_logic_vector(to_unsigned(CONTROL_ADD, load'length)); -- 44: (ADD SRC, DST)
+        load <= std_logic_vector(to_unsigned(CONTROL_ADD, load'length)); -- 44: ADD SRC, DST
       
       when 9 => -- 46: µ-PC <= PLA(IR)$ [Move Z to PC] if BranchOffset
-        load <= std_logic_vector(to_unsigned(CONTROL_MOV_Z_TO_PC, load'length)); -- 89: (MOV Z to PC)
+        load <= std_logic_vector(to_unsigned(CONTROL_MOV_Z_TO_PC, load'length)); -- 89: MOV Z to PC
 
       when 11 => -- 90: µ-PC <= PLA(IR)$ END
-        load <= std_logic_vector(to_unsigned(CONTROL_END, load'length)); -- row 95 (MOV Z to PC)
+        load <= std_logic_vector(to_unsigned(CONTROL_END, load'length));
       
       when others => null;
       end case;
@@ -1038,5 +1058,6 @@ begin
       END IF;
 
     END IF;
+    end if;
   END PROCESS;
 end architecture;
